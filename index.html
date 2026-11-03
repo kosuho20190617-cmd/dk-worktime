@@ -483,24 +483,22 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (공휴일 및 오늘 날짜 정밀 계산 적용) ---
+    // --- 2. 업무 일지 로직 (공휴일 및 대체공휴일 자동 계산) ---
     let schedInitialized = false;
     function initScheduleApp() {
       if (schedInitialized) return;
       schedInitialized = true;
       var notes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1')||'{}');
       
-      // 기기 로컬 날짜 기준 정확한 오늘 키 생성 (yyyy-mm-dd)
       var dNow = new Date();
       var todayKey = dNow.getFullYear() + '-' + String(dNow.getMonth() + 1).padStart(2, '0') + '-' + String(dNow.getDate()).padStart(2, '0');
-      
       var vy = dNow.getFullYear(), vm = dNow.getMonth(), sel = todayKey, editing = false;
 
-      // 매년 고정 공휴일 체크 함수 (MM-DD)
-      function getHoliday(y, m, d) {
-        var mm = String(m + 1).padStart(2, '0');
-        var dd = String(d).padStart(2, '0');
-        var md = mm + '-' + dd;
+      // 음력 설/추석 및 주요 명절/공휴일 정밀 계산 함수 (대체공휴일 포함)
+      function getHolidaysOfYear(year) {
+        var hMap = {};
+        
+        // 1. 고정 공휴일 (양력)
         var fixed = {
           '01-01': '신정',
           '03-01': '삼일절',
@@ -511,7 +509,53 @@
           '10-09': '한글날',
           '12-25': '성탄절'
         };
-        return fixed[md] || '';
+
+        for (var md in fixed) {
+          var dateStr = year + '-' + md;
+          hMap[dateStr] = fixed[md];
+        }
+
+        // 2. 주요 연도별 설날/추석/부처님오신날 및 대체공휴일 데이터 (2024~2030 확장)
+        // [설날 연휴 3일], [추석 연휴 3일], [부처님오신날 양력 날짜]
+        var lunarData = {
+          2024: { seol: ['2024-02-09', '2024-02-10', '2024-02-11'], seolAlt: '2024-02-12', buddha: '2024-05-15', chuseok: ['2024-09-16', '2024-09-17', '2024-09-18'] },
+          2025: { seol: ['2025-01-28', '2025-01-29', '2025-01-30'], seolAlt: null, buddha: '2025-05-05', chuseok: ['2025-10-05', '2025-10-06', '2025-10-07'], chuseokAlt: '2025-10-08' },
+          2026: { seol: ['2026-02-16', '2026-02-17', '2026-02-18'], seolAlt: null, buddha: '2026-05-24', buddhaAlt: '2026-05-25', chuseok: ['2026-09-24', '2026-09-25', '2026-09-26'] },
+          2027: { seol: ['2027-02-05', '2027-02-06', '2027-02-07'], seolAlt: '2027-02-08', buddha: '2027-05-13', chuseok: ['2027-09-14', '2027-09-15', '2027-09-16'] },
+          2028: { seol: ['2028-01-25', '2028-01-26', '2028-01-27'], seolAlt: null, buddha: '2028-05-02', chuseok: ['2028-10-02', '2028-10-03', '2028-10-04'] },
+          2029: { seol: ['2029-02-12', '2029-02-13', '2029-02-14'], seolAlt: null, buddha: '2029-05-20', buddhaAlt: '2029-05-21', chuseok: ['2029-09-21', '2029-09-22', '2029-09-23'], chuseokAlt: '2029-09-24' },
+          2030: { seol: ['2030-02-01', '2030-02-02', '2030-02-03'], seolAlt: '2030-02-04', buddha: '2030-05-09', chuseok: ['2030-09-11', '2030-09-12', '2030-09-13'] }
+        };
+
+        var curL = lunarData[year];
+        if (curL) {
+          curL.seol.forEach((d, idx) => { hMap[d] = idx === 0 ? '설날 전날' : idx === 1 ? '설날' : '설날 다음날'; });
+          if (curL.seolAlt) hMap[curL.seolAlt] = '대체공휴일';
+
+          curL.chuseok.forEach((d, idx) => { hMap[d] = idx === 0 ? '추석 전날' : idx === 1 ? '추석' : '추석 다음날'; });
+          if (curL.chuseokAlt) hMap[curL.chuseokAlt] = '대체공휴일';
+
+          if (curL.buddha) hMap[curL.buddha] = '부처님오신날';
+          if (curL.buddhaAlt) hMap[curL.buddhaAlt] = '대체공휴일';
+        }
+
+        // 3. 일반 공휴일 & 어린이날 자동 대체공휴일 계산 (일요일 등 주말과 겹칠 경우)
+        var baseCheckDates = Object.keys(hMap);
+        baseCheckDates.forEach(dateStr => {
+          var dt = new Date(dateStr);
+          var dayOfWeek = dt.getDay();
+          // 일요일(0)인 경우 다음 평일에 대체공휴일 부여 (삼일절, 어린이날, 광복절, 개천절, 한글날, 성탄절 등)
+          if (dayOfWeek === 0) {
+            var nextDay = new Date(dt);
+            nextDay.setDate(dt.getDate() + 1);
+            var nStr = nextDay.toISOString().split('T')[0];
+            if (!hMap[nStr]) {
+              hMap[nStr] = '대체공휴일';
+            }
+          }
+        });
+
+        return hMap;
       }
 
       function renderSchedGrid(){
@@ -523,13 +567,15 @@
         var days = new Date(vy, vm + 1, 0).getDate();
         var total = Math.ceil((first+days)/7)*7;
 
+        var holidayMap = getHolidaysOfYear(vy);
+
         for(var i=0; i<total; i++){
           var d = i - first + 1;
           if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
           
           var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
           var txt = notes[k]||'';
-          var holName = getHoliday(vy, vm, d);
+          var holName = holidayMap[k] || '';
           var isSun = (i % 7 === 0);
           var isHol = (isSun || holName !== '');
 
@@ -549,16 +595,16 @@
 
           grid.appendChild(b);
         }
-        renderSchedList(days);
+        renderSchedList(days, holidayMap);
       }
 
-      function renderSchedList(days){
+      function renderSchedList(days, holidayMap){
         var L = document.getElementById('list'); L.innerHTML = '';
         document.getElementById('fh').textContent = (vm+1)+'월 주요 일정 및 메모';
         var any=false;
         for(var d=1; d<=days; d++){
           var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-          var holName = getHoliday(vy, vm, d);
+          var holName = holidayMap[k] || '';
           if(notes[k] || holName){
             any=true;
             var li = document.createElement('button'); li.type = 'button'; li.className = `li ${holName?'h':''}`;
@@ -581,7 +627,8 @@
         var p = sel.split('-'); 
         var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
         var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-        var holName = getHoliday(+p[0], +p[1]-1, +p[2]);
+        var holidayMap = getHolidaysOfYear(+p[0]);
+        var holName = holidayMap[sel] || '';
         
         document.getElementById('mTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
         document.getElementById('lunarInfo').textContent = `${p[0]}년 기록`;
@@ -609,7 +656,7 @@
       document.getElementById('bEdit').onclick = () => { editing=true; renderMemo(); };
       document.getElementById('bCancel').onclick = () => { editing=false; renderMemo(); };
       document.getElementById('bSave').onclick = () => {
-        var v = document.getElementById('mEdit').value.trim();
+        var v = document.getElementById('mEdit'].value.trim();
         if(v) notes[sel] = v; else delete notes[sel];
         localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(notes));
         editing=false; renderSchedGrid(); renderMemo();
