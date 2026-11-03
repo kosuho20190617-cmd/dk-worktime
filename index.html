@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>근무 및 연차 관리 시스템 (구글 시트 연동)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +13,8 @@
   <style>
     body {
       font-family: 'Noto Sans KR', sans-serif;
+      /* 스마트폰 상단 노치/상태바 영역 침범 방지 */
+      padding-top: env(safe-area-inset-top, 0px);
     }
     .no-scrollbar::-webkit-scrollbar {
       display: none;
@@ -25,15 +27,15 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
 
-  <!-- Header -->
-  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+  <!-- Header (상단 겹침 방지를 위해 pt-safe 및 여백 조정) -->
+  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 pt-2 sm:pt-0">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
       <div class="flex items-center space-x-2 sm:space-x-3">
         <div class="bg-white/10 p-1.5 sm:p-2 rounded-lg">
           <i class="fa-regular fa-clock text-xl sm:text-2xl text-indigo-200"></i>
         </div>
         <div>
-          <h1 class="text-base sm:text-xl font-bold tracking-tight">근무 및 연차 관리</h1>
+          <h1 class="text-sm sm:text-xl font-bold tracking-tight">근무 및 연차 관리</h1>
           <p class="text-[10px] sm:text-xs text-indigo-200 hidden sm:block">구글 시트 실시간 연동 버전</p>
         </div>
       </div>
@@ -190,7 +192,6 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    // 👇 아래 주소를 본인의 구글 Apps Script 웹 앱 URL로 변경하세요!
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypVfJMF2TOIpVT9QOCEcno_TKSgQYJOsMJirvmV1VjDsih7whixYDug9fW-GfZ8_kkVg/exec';
 
     let records = [];
@@ -235,7 +236,6 @@
       await fetchRecordsFromSheet();
     }
 
-    // --- Google Sheet Data Fetch (Load) ---
     async function fetchRecordsFromSheet() {
       if (SCRIPT_URL.includes('여기에')) {
         alert('구글 Apps Script 웹 앱 URL이 설정되지 않았습니다. 코드를 확인해주세요.');
@@ -252,7 +252,6 @@
       }
     }
 
-    // --- Google Sheet Data Send (Save/Update/Delete) ---
     async function sendDataToSheet(payload) {
       try {
         await fetch(SCRIPT_URL, {
@@ -620,9 +619,7 @@
         render();
       });
 
-      exportCsvBtn.addEventListener('click', exportTest = () => {
-        exportToCsv();
-      });
+      exportCsvBtn.addEventListener('click', exportToCsv);
     }
 
     function escapeHtml(str) {
