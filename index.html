@@ -13,8 +13,8 @@
   <style>
     body {
       font-family: 'Noto Sans KR', sans-serif;
-      /* 스마트폰 상단 노치/상태바 영역 침범 방지 */
-      padding-top: env(safe-area-inset-top, 0px);
+      /* 스마트폰 상단바 영역만큼 전체 페이지 상단에 안전 여백 확보 */
+      padding-top: env(safe-area-inset-top, 24px);
     }
     .no-scrollbar::-webkit-scrollbar {
       display: none;
@@ -27,8 +27,8 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
 
-  <!-- Header (상단 겹침 방지를 위해 pt-safe 및 여백 조정) -->
-  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 pt-2 sm:pt-0">
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 pt-3 sm:pt-0">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
       <div class="flex items-center space-x-2 sm:space-x-3">
         <div class="bg-white/10 p-1.5 sm:p-2 rounded-lg">
