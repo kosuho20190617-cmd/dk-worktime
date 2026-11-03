@@ -14,16 +14,28 @@
     body {
       font-family: 'Noto Sans KR', sans-serif;
       padding-top: env(safe-area-inset-top, 24px);
-      background-color: #f8fafc;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 업무 일지(일정) 모바일 맞춤 스타일 */
-    :root{
-      --desk:#f8fafc; --paper:#ffffff; --ink:#25282d; --muted:#80838a; --line:#e3e0d6;
-      --sun:#c2392b; --sat:#3a6ea5; --band:#27418f; --band-ink:#fff; --sel:#fff3c4; --hole:#d8dbd4; --ren:#fdeeea;
+    /* 1. 휴대폰 시스템 테마(다크모드/라이트모드) 자동 대응 스타일 */
+    :root {
+      --desk: #f8fafc; --paper: #ffffff; --ink: #25282d; --muted: #80838a; --line: #e3e0d6;
+      --sun: #c2392b; --sat: #3a6ea5; --band: #27418f; --band-ink: #fff; --sel: #fff3c4; --hole: #d8dbd4; --ren: #fdeeea;
     }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --desk: #121417; --paper: #1e2229; --ink: #ecebe5; --muted: #9a9da3; --line: #2e333d;
+        --sun: #ef7b6e; --sat: #7fb0e6; --band: #3a55b0; --band-ink: #fff; --sel: #3a331c; --hole: #121417; --ren: #352a29;
+      }
+    }
+
+    body {
+      background-color: var(--desk);
+      color: var(--ink);
+    }
+
+    /* 업무 일지(일정) 스타일 */
     .cal-wrap { width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
     .sheet { background: var(--paper); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
     .binding { height: 20px; background: radial-gradient(circle at 50% 52%, var(--hole) 0 4px, transparent 5px) 0 0/36px 20px repeat-x, var(--paper); border-bottom: 1px solid var(--line); }
@@ -51,22 +63,22 @@
     .foot h3 { margin: 0 0 4px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; }
     .li { display: flex; gap: 6px; align-items: baseline; width: 100%; font: inherit; font-size: 12px; color: var(--ink); background: none; border: 0; border-bottom: 1px dashed var(--line); padding: 5px 2px; cursor: pointer; text-align: left; }
     .li .d { min-width: 50px; color: var(--muted); }
-    .memo-sec { background: var(--paper); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 14px 16px; border-top: 4px solid var(--band); }
+    .memo-sec { background: var(--paper); color: var(--ink); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 14px 16px; border-top: 4px solid var(--band); }
     .memo-sec h2 { margin: 0 0 4px; font: 800 18px/1.3 'Nanum Myeongjo', Batang, serif; }
-    .memo-body, textarea { display: block; width: 100%; min-height: 110px; font: inherit; font-size: 14px; line-height: 24px; color: var(--ink); background: repeating-linear-gradient(transparent 0 23px, var(--line) 23px 24px) local; border: 0; padding: 0; margin: 0; }
+    .memo-body, textarea { display: block; width: 100%; min-height: 110px; font: inherit; font-size: 14px; line-height: 24px; color: var(--ink); background: var(--paper); border: 0; padding: 0; margin: 0; }
     .memo-body { white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased">
+<body class="transition-colors duration-200">
 
   <!-- 1. 메인 홈 화면 (버튼 2개) -->
-  <div id="homeView" class="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+  <div id="homeView" class="flex-1 min-h-screen flex flex-col items-center justify-center p-6 space-y-6">
     <div class="text-center space-y-2">
-      <div class="inline-block bg-indigo-100 p-3 rounded-2xl text-indigo-600 mb-2 shadow-sm">
+      <div class="inline-block bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-2xl text-indigo-600 dark:text-indigo-400 mb-2 shadow-sm">
         <i class="fa-solid fa-clipboard-user text-4xl"></i>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">근무 및 업무 통합 시스템</h1>
-      <p class="text-xs sm:text-sm text-slate-500">원하시는 메뉴를 선택해 주세요.</p>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">근무 및 업무 통합 시스템</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">원하시는 메뉴를 선택해 주세요.</p>
     </div>
 
     <div class="w-full max-w-sm space-y-4">
@@ -119,30 +131,30 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4">
-      <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row items-center justify-between gap-3">
         <div class="flex items-center space-x-2 w-full md:w-auto justify-between">
           <button id="prevMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-left"></i></button>
-          <input type="month" id="monthPicker" class="text-base font-bold text-slate-800 bg-transparent border border-slate-300 rounded-lg px-2 py-1">
+          <input type="month" id="monthPicker" class="text-base font-bold bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1">
           <button id="nextMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-right"></i></button>
-          <button id="todayBtn" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-md border">이번 달</button>
+          <button id="todayBtn" class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-600">이번 달</button>
         </div>
         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-          <span class="text-xs font-semibold text-slate-500">근무자:</span>
-          <select id="workerFilter" class="bg-slate-50 border border-slate-300 text-xs sm:text-sm rounded-lg px-2.5 py-1.5">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">근무자:</span>
+          <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5">
             <option value="ALL">전체 보기</option>
           </select>
         </div>
       </section>
 
-      <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-2 sm:p-6 overflow-x-auto">
-        <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b pb-2 mb-2 min-w-[280px]">
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-6 overflow-x-auto">
+        <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-2 mb-2 min-w-[280px]">
           <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-1 min-w-[280px]"></div>
       </section>
 
-      <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 space-y-3">
-        <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center space-x-2">
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+        <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2">
           <i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span>
         </h3>
         <div id="workerBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
@@ -150,13 +162,13 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (모바일 맞춤 최적화 적용) -->
-  <div id="scheduleView" class="hidden flex-1 flex flex-col p-2 sm:p-6 bg-[#d8dbd4]">
-    <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-900/10 p-2 rounded-xl">
-      <button onclick="goHome()" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow">
+  <!-- 3. 업무 일지 화면 (날짜 터치 연동 완료) -->
+  <div id="scheduleView" class="hidden flex-1 flex flex-col p-2 sm:p-6" style="background-color: var(--desk);">
+    <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-900/10 dark:bg-white/10 p-2 rounded-xl">
+      <button onclick="goHome()" class="bg-slate-800 dark:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow">
         <i class="fa-solid fa-house"></i><span>홈으로</span>
       </button>
-      <span class="text-xs font-bold text-slate-700">업무 일지 모드</span>
+      <span class="text-xs font-bold opacity-80">업무 일지 모드</span>
     </div>
 
     <div class="cal-wrap">
@@ -177,13 +189,14 @@
 
       <section class="memo-sec" id="memo" aria-live="polite">
         <h2 id="mTitle"></h2>
+        <div id="lunarInfo" style="font-size: 11px; opacity: 0.7; margin-bottom: 8px;"></div>
         <div class="memo-body" id="mBody"></div>
         <textarea id="mEdit" hidden aria-label="내용" placeholder="이 날의 일정이나 메모를 적어 보세요."></textarea>
         <div class="actions" style="display:flex; gap:8px; margin-top:10px;">
-          <button id="bEdit" style="padding:6px 14px; border-radius:6px; background:#fff; border:1px solid #ccc; cursor:pointer; font-size:13px;">수정</button>
-          <button id="bSave" class="primary" hidden style="padding:6px 14px; border-radius:6px; background:#27418f; color:#fff; border:0; cursor:pointer; font-size:13px;">저장</button>
-          <button id="bCancel" hidden style="padding:6px 14px; border-radius:6px; background:#fff; border:1px solid #ccc; cursor:pointer; font-size:13px;">취소</button>
-          <span id="msg" style="font-size:12px; color:#666; align-self:center;"></span>
+          <button id="bEdit" style="padding:6px 14px; border-radius:6px; background:var(--paper); border:1px solid var(--line); cursor:pointer; font-size:13px;">수정</button>
+          <button id="bSave" class="primary" hidden style="padding:6px 14px; border-radius:6px; background:var(--band); color:#fff; border:0; cursor:pointer; font-size:13px;">저장</button>
+          <button id="bCancel" hidden style="padding:6px 14px; border-radius:6px; background:var(--paper); border:1px solid var(--line); cursor:pointer; font-size:13px;">취소</button>
+          <span id="msg" style="font-size:12px; opacity:0.7; align-self:center;"></span>
         </div>
       </section>
     </div>
@@ -191,24 +204,24 @@
 
   <!-- 근무 등록/수정 모달창 -->
   <div id="entryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-2xl shadow-xl border w-full max-w-md overflow-hidden">
-      <div class="bg-slate-50 px-6 py-4 border-b flex items-center justify-between">
-        <h3 id="modalTitle" class="text-lg font-bold text-slate-800">내역 등록</h3>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border dark:border-slate-700 w-full max-w-md overflow-hidden">
+      <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b dark:border-slate-700 flex items-center justify-between">
+        <h3 id="modalTitle" class="text-lg font-bold">내역 등록</h3>
         <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form id="recordForm" class="p-6 space-y-4">
         <input type="hidden" id="recordId">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">날짜 *</label>
-          <input type="date" id="inputDate" required class="w-full px-3 py-2 border rounded-lg text-sm">
+          <label class="block text-xs font-bold mb-1">날짜 *</label>
+          <input type="date" id="inputDate" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">이름 *</label>
-          <input type="text" id="inputWorker" placeholder="예: 홍길동" required class="w-full px-3 py-2 border rounded-lg text-sm">
+          <label class="block text-xs font-bold mb-1">이름 *</label>
+          <input type="text" id="inputWorker" placeholder="예: 홍길동" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">구분 *</label>
-          <select id="inputCategory" required class="w-full px-3 py-2 border rounded-lg text-sm">
+          <label class="block text-xs font-bold mb-1">구분 *</label>
+          <select id="inputCategory" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
             <option value="연장근무">연장근무</option>
             <option value="휴일특근">휴일특근</option>
             <option value="야간근무">야간근무</option>
@@ -218,17 +231,17 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">시간 *</label>
-          <input type="number" id="inputHours" step="0.5" min="0" max="24" required class="w-full px-3 py-2 border rounded-lg text-sm">
+          <label class="block text-xs font-bold mb-1">시간 *</label>
+          <input type="number" id="inputHours" step="0.5" min="0" max="24" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">사유 및 비고</label>
-          <textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border rounded-lg text-sm resize-none"></textarea>
+          <label class="block text-xs font-bold mb-1">사유 및 비고</label>
+          <textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm resize-none bg-transparent"></textarea>
         </div>
-        <div class="flex items-center justify-between pt-3 border-t">
-          <button type="button" id="deleteModalBtn" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hidden">삭제</button>
+        <div class="flex items-center justify-between pt-3 border-t dark:border-slate-700">
+          <button type="button" id="deleteModalBtn" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/30 rounded-lg hidden">삭제</button>
           <div class="flex space-x-2 ml-auto">
-            <button type="button" id="cancelModalBtn" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-lg">취소</button>
+            <button type="button" id="cancelModalBtn" class="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-lg">취소</button>
             <button type="submit" class="px-5 py-2 text-sm text-white bg-indigo-600 rounded-lg">저장</button>
           </div>
         </div>
@@ -338,10 +351,10 @@
       names.forEach(name => {
         const d = map[name];
         const card = document.createElement('div');
-        card.className = 'bg-slate-50 border rounded-lg p-2.5';
+        card.className = 'bg-slate-50 dark:bg-slate-700/50 border dark:border-slate-700 rounded-lg p-2.5';
         card.innerHTML = `
-          <div class="flex justify-between mb-1 text-xs font-bold"><span>${name}</span><span class="text-indigo-600">총 ${d.totalHours}시간</span></div>
-          <div class="grid grid-cols-4 text-center text-[10px] bg-white p-1 rounded border text-slate-600">
+          <div class="flex justify-between mb-1 text-xs font-bold"><span>${name}</span><span class="text-indigo-600 dark:text-indigo-400">총 ${d.totalHours}시간</span></div>
+          <div class="grid grid-cols-4 text-center text-[10px] bg-white dark:bg-slate-800 p-1 rounded border dark:border-slate-700 text-slate-600 dark:text-slate-300">
             <div>연장<br><b>${d.overtime}h</b></div><div>특근<br><b>${d.holiday}h</b></div><div>야간<br><b>${d.night}h</b></div><div>휴가<br><b>${d.leave}회</b></div>
           </div>`;
         container.appendChild(card);
@@ -368,7 +381,7 @@
       for (let d = 1; d <= last; d++) {
         const cell = document.createElement('div');
         const isT = isCur && today.getDate() === d;
-        cell.className = `min-h-[75px] rounded-lg p-1 border flex flex-col justify-between ${isT ? 'bg-indigo-50/30 border-indigo-300 ring-1 ring-indigo-200' : 'bg-white border-slate-200'}`;
+        cell.className = `min-h-[75px] rounded-lg p-1 border flex flex-col justify-between ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
         
         const dStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         cell.innerHTML = `
@@ -382,7 +395,7 @@
         (byDay[d] || []).forEach(r => {
           const badge = document.createElement('div');
           badge.onclick = (e) => { e.stopPropagation(); openEditModal(r.id); };
-          badge.className = 'text-[9px] px-1 py-0.5 rounded border truncate cursor-pointer bg-slate-50 flex justify-between';
+          badge.className = 'text-[9px] px-1 py-0.5 rounded border truncate cursor-pointer bg-slate-50 dark:bg-slate-700 dark:border-slate-600 flex justify-between';
           badge.innerHTML = `<span><b>${r.workerName}</b> (${r.category})</span><b>${r.hours}h</b>`;
           content.appendChild(badge);
         });
@@ -420,7 +433,7 @@
         e.preventDefault();
         const id = document.getElementById('recordId').value;
         const date = document.getElementById('inputDate').value;
-        const workerName = document.getElementById('inputWorker').value.trim();
+        const workerName = document.getElementById('inputWorker'].value.trim();
         const category = document.getElementById('inputCategory').value;
         const hours = parseFloat(document.getElementById('inputHours').value);
         const memo = document.getElementById('inputMemo').value.trim();
@@ -468,7 +481,7 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (모바일 크기 100% 최적화) ---
+    // --- 2. 업무 일지 로직 (날짜 터치 연동 수정 완료) ---
     let schedInitialized = false;
     function initScheduleApp() {
       if (schedInitialized) return;
@@ -492,9 +505,20 @@
           if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
           var ms = Date.UTC(vy, vm, d), k = kk(ms), txt = notes[k]||'';
           var b = document.createElement('button');
+          b.type = 'button';
           b.className = `cell c${i%7} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
           b.innerHTML = `<div class="top"><span class="n">${d}</span></div>${txt?`<span class="p">${txt}</span>`:''}`;
-          b.onclick = () => { sel = k; renderSchedGrid(); renderMemo(); };
+          
+          // 달력 날짜 터치 시 해당 날짜로 선택 및 메모 영역 연동
+          b.onclick = (function(dateKey) {
+            return function() {
+              sel = dateKey;
+              editing = false;
+              renderSchedGrid();
+              renderMemo();
+            };
+          })(k);
+
           grid.appendChild(b);
         }
         renderSchedList(days);
@@ -508,18 +532,30 @@
           var k = kk(Date.UTC(vy, vm, d));
           if(notes[k]){
             any=true;
-            var li = document.createElement('button'); li.className = 'li';
+            var li = document.createElement('button'); li.type = 'button'; li.className = 'li';
             li.innerHTML = `<span class="d">${d}일</span><span class="nm">${notes[k]}</span>`;
-            li.onclick = () => { sel = k; renderSchedGrid(); renderMemo(); };
+            li.onclick = (function(dateKey) {
+              return function() {
+                sel = dateKey;
+                editing = false;
+                renderSchedGrid();
+                renderMemo();
+              };
+            })(k);
             L.appendChild(li);
           }
         }
-        if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
+        if(!any) L.innerHTML = `<p class="text-xs opacity-60 py-1">작성된 메모가 없습니다.</p>`;
       }
 
       function renderMemo(){
-        var p = sel.split('-'); var ms = Date.UTC(+p[0], +p[1]-1, +p[2]);
-        document.getElementById('mTitle').textContent = `${p[0]}년 ${+p[1]}월 ${+p[2]}일`;
+        var p = sel.split('-'); 
+        var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
+        var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+        
+        document.getElementById('mTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}`;
+        document.getElementById('lunarInfo').textContent = `${p[0]}년 기록`;
+
         var txt = notes[sel]||'';
         var body = document.getElementById('mBody'), edit = document.getElementById('mEdit');
         body.hidden = editing; edit.hidden = !editing;
@@ -527,11 +563,11 @@
         document.getElementById('bSave').hidden = !editing;
         document.getElementById('bCancel').hidden = !editing;
         if(editing){ edit.value = txt; edit.focus(); }
-        else { body.textContent = txt || '메모가 없습니다. 수정을 눌러 입력하세요.'; body.className = 'memo-body' + (txt ? '' : ' text-slate-400'); }
+        else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'memo-body' + (txt ? '' : ' opacity-50'); }
       }
 
-      document.getElementById('prev').onclick = () => { vm--; if(vm<0){vm=11;vy--;} renderSchedGrid(); renderMemo(); };
-      document.getElementById('next').onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); renderMemo(); };
+      document.getElementById('prev').onclick = () => { vm--; if(vm<0){vm=11;vy--;} renderSchedGrid(); };
+      document.getElementById('next').onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); };
       document.getElementById('today').onclick = () => { sel=todayKey; var a=todayKey.split('-'); vy=+a[0]; vm=+a[1]-1; renderSchedGrid(); renderMemo(); };
       document.getElementById('bEdit').onclick = () => { editing=true; renderMemo(); };
       document.getElementById('bCancel').onclick = () => { editing=false; renderMemo(); };
