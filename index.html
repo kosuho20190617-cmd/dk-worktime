@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>근무 및 연차 관리 시스템 (구글 시트 연동)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts (Noto Sans KR) -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white/10 p-2 rounded-lg">
+          <i class="fa-regular fa-clock text-2xl text-indigo-200"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">근무 및 연차 관리 시스템</h1>
+          <p class="text-xs text-indigo-200 hidden sm:block">구글 시트 실시간 연동 버전</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button id="exportCsvBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-1 border border-indigo-400/30">
+          <i class="fa-solid fa-file-csv text-base"></i>
+          <span class="hidden sm:inline">CSV 다운로드</span>
+        </button>
+        <button id="openAddModalBtn" class="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center space-x-1">
+          <i class="fa-solid fa-plus"></i>
+          <span>내역 등록</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- Filter & Control Bar -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <!-- Month Navigation -->
+      <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
+        <button id="prevMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="이전 달">
+          <i class="fa-solid fa-chevron-left text-lg"></i>
+        </button>
+        <div class="flex items-center space-x-2">
+          <input type="month" id="monthPicker" class="text-lg font-bold text-slate-800 bg-transparent border border-slate-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer">
+        </div>
+        <button id="nextMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="다음 달">
+          <i class="fa-solid fa-chevron-right text-lg"></i>
+        </button>
+        <button id="todayBtn" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-2.5 py-1.5 rounded-md transition border border-slate-200">
+          이번 달
+        </button>
+      </div>
+
+      <!-- Worker Filter -->
+      <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">근무자 필터:</span>
+        <select id="workerFilter" class="bg-slate-50 border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <option value="ALL">전체 근무자 보기</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- CALENDAR VIEW SECTION -->
+    <section id="calendarViewSection" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+      <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b border-slate-200 pb-2 mb-2">
+        <div class="text-red-500">일</div>
+        <div>월</div>
+        <div>화</div>
+        <div>수</div>
+        <div>목</div>
+        <div>금</div>
+        <div class="text-blue-500">토</div>
+      </div>
+      <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2 auto-rows-fr">
+        <!-- Calendar days populated dynamically -->
+      </div>
+    </section>
+
+    <!-- WORKER-SPECIFIC BREAKDOWN SECTION -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+          <i class="fa-solid fa-users text-indigo-600"></i>
+          <span>근무자별 월간 집계 내역</span>
+        </h3>
+        <span class="text-xs text-slate-400">이번 달 기준</span>
+      </div>
+      <div id="workerBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Dynamically populated worker breakdown cards -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-8 text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>© 2026 구글 시트 연동 근무 및 연차 관리 시스템</p>
+    </div>
+  </footer>
+
+  <!-- ADD / EDIT MODAL -->
+  <div id="entryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden transform transition-all">
+      <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="modalTitle" class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+          <i class="fa-regular fa-pen-to-square text-indigo-600"></i>
+          <span>내역 등록</span>
+        </h3>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200/50 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="recordForm" class="p-6 space-y-4">
+        <input type="hidden" id="recordId">
+
+        <div>
+          <label for="inputDate" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">날짜 <span class="text-red-500">*</span></label>
+          <input type="date" id="inputDate" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label for="inputWorker" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">이름 <span class="text-red-500">*</span></label>
+          <input type="text" id="inputWorker" placeholder="예: 홍길동" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label for="inputCategory" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">구분 <span class="text-red-500">*</span></label>
+          <select id="inputCategory" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="연장근무">연장근무 (평일 퇴근 후)</option>
+            <option value="휴일특근">휴일특근 (주말 및 공휴일)</option>
+            <option value="야간근무">야간근무 (심야 근무)</option>
+            <option value="연차">연차 (전일 휴가 - 8h)</option>
+            <option value="반차">반차 (오전/오후 휴가 - 4h)</option>
+            <option value="조퇴">조퇴 (조기 퇴근)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="inputHours" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">시간 <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <input type="number" id="inputHours" step="0.5" min="0" max="24" placeholder="예: 8" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none pr-12">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">시간</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">연차(8h), 반차(4h), 조퇴(해당 시간)에 맞게 자동 반영됩니다.</p>
+        </div>
+
+        <div>
+          <label for="inputMemo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">사유 및 비고</label>
+          <textarea id="inputMemo" rows="3" placeholder="업무 내용 또는 휴가/조퇴 사유 등을 입력하세요." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+          <button type="button" id="deleteModalBtn" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition hidden">
+            삭제하기
+          </button>
+          <div class="flex items-center space-x-3 ml-auto">
+            <button type="button" id="cancelModalBtn" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+              취소
+            </button>
+            <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">
+              저장하기
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 👇 아래 주소를 본인의 구글 Apps Script 웹 앱 URL로 변경하세요!
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypVfJMF2TOIpVT9QOCEcno_TKSgQYJOsMJirvmV1VjDsih7whixYDug9fW-GfZ8_kkVg/exec';
+
+    let records = [];
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth() + 1;
+
+    const monthPicker = document.getElementById('monthPicker');
+    const prevMonthBtn = document.getElementById('prevMonthBtn');
+    const nextMonthBtn = document.getElementById('nextMonthBtn');
+    const todayBtn = document.getElementById('todayBtn');
+    const workerFilter = document.getElementById('workerFilter');
+
+    const calendarGrid = document.getElementById('calendarGrid');
+    const workerBreakdownContainer = document.getElementById('workerBreakdownContainer');
+
+    const openAddModalBtn = document.getElementById('openAddModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const deleteModalBtn = document.getElementById('deleteModalBtn');
+    const entryModal = document.getElementById('entryModal');
+    const recordForm = document.getElementById('recordForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const inputCategory = document.getElementById('inputCategory');
+    const inputHours = document.getElementById('inputHours');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+    function getCategoryCalendarBadgeClass(category) {
+      switch (category) {
+        case '연장근무': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case '휴일특근': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+        case '야간근무': return 'bg-purple-100 text-purple-800 border-purple-200';
+        case '연차': return 'bg-rose-100 text-rose-800 border-rose-200';
+        case '반차': return 'bg-amber-100 text-amber-800 border-amber-200';
+        case '조퇴': return 'bg-orange-100 text-orange-800 border-orange-200';
+        default: return 'bg-slate-100 text-slate-800 border-slate-200';
+      }
+    }
+
+    async function initApp() {
+      setMonthPickerValue(currentYear, currentMonth);
+      setupEventListeners();
+      await fetchRecordsFromSheet();
+    }
+
+    // --- Google Sheet Data Fetch (Load) ---
+    async function fetchRecordsFromSheet() {
+      if (SCRIPT_URL.includes('여기에')) {
+        alert('구글 Apps Script 웹 앱 URL이 설정되지 않았습니다. 코드를 확인해주세요.');
+        return;
+      }
+      try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        records = data;
+        render();
+      } catch (e) {
+        console.error('구글 시트 데이터 로드 실패', e);
+        alert('데이터를 불러오지 못했습니다. URL을 확인해 주세요.');
+      }
+    }
+
+    // --- Google Sheet Data Send (Save/Update/Delete) ---
+    async function sendDataToSheet(payload) {
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.error('구글 시트 전송 실패', e);
+      }
+    }
+
+    function setMonthPickerValue(year, month) {
+      const mStr = String(month).padStart(2, '0');
+      monthPicker.value = `${year}-${mStr}`;
+    }
+
+    function getSelectedYearMonth() {
+      const [y, m] = monthPicker.value.split('-').map(Number);
+      return { year: y, month: m };
+    }
+
+    function updateWorkerFilterOptions(monthlyRecords) {
+      const currentSelected = workerFilter.value;
+      const workers = [...new Set(records.map(r => r.workerName))].filter(Boolean).sort();
+      
+      workerFilter.innerHTML = `<option value="ALL">전체 근무자 보기</option>`;
+      workers.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w;
+        opt.textContent = w;
+        if (w === currentSelected) opt.selected = true;
+        workerFilter.appendChild(opt);
+      });
+    }
+
+    function render() {
+      const { year, month } = getSelectedYearMonth();
+      currentYear = year;
+      currentMonth = month;
+
+      const monthlyRecords = records.filter(r => {
+        if (!r.date) return false;
+        const [rY, rM] = r.date.toString().split('-').map(Number);
+        return rY === year && rM === month;
+      });
+
+      updateWorkerFilterOptions(monthlyRecords);
+
+      const selectedWorker = workerFilter.value;
+      const filteredRecords = selectedWorker === 'ALL' 
+        ? monthlyRecords 
+        : monthlyRecords.filter(r => r.workerName === selectedWorker);
+
+      renderWorkerBreakdown(monthlyRecords);
+      renderCalendar(year, month, filteredRecords);
+    }
+
+    function renderWorkerBreakdown(monthlyRecords) {
+      workerBreakdownContainer.innerHTML = '';
+
+      const workerMap = {};
+      monthlyRecords.forEach(r => {
+        const name = r.workerName || '미지정';
+        if (!workerMap[name]) {
+          workerMap[name] = { totalHours: 0, overtime: 0, holiday: 0, night: 0, leave: 0, count: 0 };
+        }
+        workerMap[name].count += 1;
+        const hrs = parseFloat(r.hours) || 0;
+        if (['연장근무', '휴일특근', '야간근무'].includes(r.category)) {
+          workerMap[name].totalHours += hrs;
+        }
+        if (r.category === '연장근무') workerMap[name].overtime += hrs;
+        if (r.category === '휴일특근') workerMap[name].holiday += hrs;
+        if (r.category === '야간근무') workerMap[name].night += hrs;
+        if (['연차', '반차', '조퇴'].includes(r.category)) workerMap[name].leave += 1;
+      });
+
+      const workerNames = Object.keys(workerMap).sort();
+
+      if (workerNames.length === 0) {
+        workerBreakdownContainer.innerHTML = `<p class="text-xs text-slate-400 col-span-full py-2">이번 달 등록된 내역이 없습니다.</p>`;
+        return;
+      }
+
+      workerNames.forEach(name => {
+        const data = workerMap[name];
+        const card = document.createElement('div');
+        card.className = 'bg-slate-50 border border-slate-200 rounded-lg p-3 flex flex-col justify-between hover:border-indigo-300 transition';
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-regular fa-user text-indigo-500 text-xs"></i>${escapeHtml(name)}</span>
+            <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">총 ${data.totalHours.toFixed(1).replace(/\.0$/, '')}시간</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1 text-center text-[11px] text-slate-600 bg-white p-2 rounded border border-slate-100">
+            <div>
+              <div class="text-slate-400 text-[10px]">연장</div>
+              <div class="font-bold text-blue-600">${data.overtime.toFixed(1).replace(/\.0$/, '')}h</div>
+            </div>
+            <div>
+              <div class="text-slate-400 text-[10px]">특근</div>
+              <div class="font-bold text-emerald-600">${data.holiday.toFixed(1).replace(/\.0$/, '')}h</div>
+            </div>
+            <div>
+              <div class="text-slate-400 text-[10px]">야간</div>
+              <div class="font-bold text-purple-600">${data.night.toFixed(1).replace(/\.0$/, '')}h</div>
+            </div>
+            <div>
+              <div class="text-slate-400 text-[10px]">휴가</div>
+              <div class="font-bold text-rose-600">${data.leave}회</div>
+            </div>
+          </div>
+        `;
+        workerBreakdownContainer.appendChild(card);
+      });
+    }
+
+    function renderCalendar(year, month, monthlyRecords) {
+      calendarGrid.innerHTML = '';
+
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const lastDate = new Date(year, month, 0).getDate();
+
+      const recordsByDay = {};
+      monthlyRecords.forEach(r => {
+        const dayNum = parseInt(r.date.toString().split('-')[2], 10);
+        if (!recordsByDay[dayNum]) recordsByDay[dayNum] = [];
+        recordsByDay[dayNum].push(r);
+      });
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'min-h-[100px] sm:min-h-[120px] bg-slate-50/40 rounded-lg p-1 border border-transparent';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      const today = new Date();
+      const isCurrentYearMonth = today.getFullYear() === year && (today.getMonth() + 1) === month;
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dayCell = document.createElement('div');
+        const isToday = isCurrentYearMonth && today.getDate() === day;
+        
+        dayCell.className = `min-h-[100px] sm:min-h-[120px] rounded-lg p-1.5 border transition flex flex-col justify-between ${
+          isToday ? 'bg-indigo-50/30 border-indigo-300 ring-2 ring-indigo-200' : 'bg-white border-slate-200 hover:border-slate-300'
+        }`;
+
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'flex items-center justify-between mb-1';
+        
+        const dayOfWeek = new Date(year, month - 1, day).getDay();
+        let textColor = 'text-slate-700';
+        if (dayOfWeek === 0) textColor = 'text-red-500 font-semibold';
+        if (dayOfWeek === 6) textColor = 'text-blue-500 font-semibold';
+
+        const mStr = String(month).padStart(2, '0');
+        const dStr = String(day).padStart(2, '0');
+        const fullDateStr = `${year}-${mStr}-${dStr}`;
+
+        dayHeader.innerHTML = `
+          <span class="text-xs sm:text-sm font-bold ${textColor} ${isToday ? 'bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : ''}">${day}</span>
+          <button onclick="openAddModalForDate('${fullDateStr}')" class="text-slate-300 hover:text-indigo-600 text-xs p-0.5" title="이 날짜에 등록">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        `;
+
+        const dayContent = document.createElement('div');
+        dayContent.className = 'space-y-1 overflow-y-auto no-scrollbar max-h-[85px]';
+
+        const dayRecs = recordsByDay[day] || [];
+        dayRecs.forEach(r => {
+          const badge = document.createElement('div');
+          badge.onclick = (e) => { e.stopPropagation(); openEditModal(r.id); };
+          badge.className = `text-[10px] sm:text-xs px-1.5 py-1 rounded border truncate cursor-pointer transition hover:opacity-80 flex items-center justify-between ${getCategoryCalendarBadgeClass(r.category)}`;
+          badge.title = `이름: ${r.workerName || '미지정'}\n구분: ${r.category} (${r.hours}h)\n사유: ${r.memo || ''}\n(클릭하여 수정/삭제)`;
+          badge.innerHTML = `
+            <span class="truncate font-semibold">${escapeHtml(r.workerName || '미지정')} <span class="font-normal border-l border-current pl-1 ml-0.5 text-[9px] opacity-80">${r.category}</span></span>
+            <span class="font-bold ml-1">${r.hours}h</span>
+          `;
+          dayContent.appendChild(badge);
+        });
+
+        dayCell.appendChild(dayHeader);
+        dayCell.appendChild(dayContent);
+        calendarGrid.appendChild(dayCell);
+      }
+    }
+
+    function openModal(isEdit = false) {
+      entryModal.classList.remove('hidden');
+      if (isEdit) {
+        modalTitle.innerHTML = `<i class="fa-regular fa-pen-to-square text-indigo-600"></i> <span>내역 수정</span>`;
+        deleteModalBtn.classList.remove('hidden');
+      } else {
+        modalTitle.innerHTML = `<i class="fa-solid fa-plus text-indigo-600"></i> <span>신규 내역 등록</span>`;
+        deleteModalBtn.classList.add('hidden');
+      }
+    }
+
+    function closeModal() {
+      entryModal.classList.add('hidden');
+      recordForm.reset();
+      document.getElementById('recordId').value = '';
+    }
+
+    function openAddModalForDate(dateStr) {
+      recordForm.reset();
+      document.getElementById('recordId').value = '';
+      document.getElementById('inputDate').value = dateStr;
+      inputHours.value = '2.5';
+      openModal(false);
+    }
+
+    function openEditModal(id) {
+      const record = records.find(r => r.id.toString() === id.toString());
+      if (!record) return;
+
+      document.getElementById('recordId').value = record.id;
+      document.getElementById('inputDate').value = record.date;
+      document.getElementById('inputWorker').value = record.workerName || '';
+      document.getElementById('inputCategory').value = record.category;
+      document.getElementById('inputHours').value = record.hours;
+      document.getElementById('inputMemo').value = record.memo || '';
+
+      openModal(true);
+    }
+
+    async function deleteRecordById(id) {
+      if (confirm('해당 내역을 삭제하시겠습니까?')) {
+        records = records.filter(r => r.id.toString() !== id.toString());
+        await sendDataToSheet({ action: 'delete', id: id });
+        closeModal();
+        render();
+      }
+    }
+
+    function exportToCsv() {
+      const { year, month } = getSelectedYearMonth();
+      const monthlyRecords = records.filter(r => {
+        if (!r.date) return false;
+        const [rY, rM] = r.date.toString().split('-').map(Number);
+        return rY === year && rM === month;
+      });
+
+      if (monthlyRecords.length === 0) {
+        alert('다운로드할 내역이 없습니다.');
+        return;
+      }
+
+      monthlyRecords.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      let csvContent = "\uFEFF"; 
+      csvContent += "날짜,이름,구분,시간,사유및비고\n";
+
+      monthlyRecords.forEach(r => {
+        const workerClean = (r.workerName || '').replace(/"/g, '""');
+        const memoClean = (r.memo || '').replace(/"/g, '""');
+        csvContent += `"${r.date}","${workerClean}","${r.category}",${r.hours},"${memoClean}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `근무_연차_내역_${year}년_${month}월.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function setupEventListeners() {
+      monthPicker.addEventListener('change', render);
+      workerFilter.addEventListener('change', render);
+
+      prevMonthBtn.addEventListener('click', () => {
+        let { year, month } = getSelectedYearMonth();
+        month--;
+        if (month < 1) {
+          month = 12;
+          year--;
+        }
+        setMonthPickerValue(year, month);
+        render();
+      });
+
+      nextMonthBtn.addEventListener('click', () => {
+        let { year, month } = getSelectedYearMonth();
+        month++;
+        if (month > 12) {
+          month = 1;
+          year++;
+        }
+        setMonthPickerValue(year, month);
+        render();
+      });
+
+      todayBtn.addEventListener('click', () => {
+        const now = new Date();
+        setMonthPickerValue(now.getFullYear(), now.getMonth() + 1);
+        render();
+      });
+
+      openAddModalBtn.addEventListener('click', () => {
+        recordForm.reset();
+        document.getElementById('recordId').value = '';
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('inputDate').value = todayStr;
+        inputHours.value = '2.5';
+        openModal(false);
+      });
+
+      closeModalBtn.addEventListener('click', closeModal);
+      cancelModalBtn.addEventListener('click', closeModal);
+
+      inputCategory.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === '연차') inputHours.value = '8';
+        else if (val === '반차') inputHours.value = '4';
+        else if (val === '조퇴') inputHours.value = '2';
+      });
+
+      deleteModalBtn.addEventListener('click', () => {
+        const id = document.getElementById('recordId').value;
+        if (id) deleteRecordById(id);
+      });
+
+      recordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('recordId').value;
+        const date = document.getElementById('inputDate').value;
+        const workerName = document.getElementById('inputWorker').value.trim();
+        const category = document.getElementById('inputCategory').value;
+        const hours = parseFloat(document.getElementById('inputHours').value);
+        const memo = document.getElementById('inputMemo').value.trim();
+
+        if (!date || !workerName || isNaN(hours) || hours < 0) {
+          alert('올바른 날짜, 이름, 시간을 입력해 주세요.');
+          return;
+        }
+
+        if (id) {
+          const idx = records.findIndex(r => r.id.toString() === id.toString());
+          if (idx !== -1) {
+            records[idx] = { id, date, workerName, category, hours, memo };
+          }
+          await sendDataToSheet({ action: 'update', id, date, workerName, category, hours, memo });
+        } else {
+          const newRecord = {
+            id: Date.now().toString(),
+            date,
+            workerName,
+            category,
+            hours,
+            memo
+          };
+          records.push(newRecord);
+          await sendDataToSheet({ action: 'insert', ...newRecord });
+        }
+
+        closeModal();
+        const [rY, rM] = date.split('-').map(Number);
+        setMonthPickerValue(rY, rM);
+        render();
+      });
+
+      exportCsvBtn.addEventListener('click', exportToCsv);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    window.onload = initApp;
+  </script>
+</body>
+</html>
