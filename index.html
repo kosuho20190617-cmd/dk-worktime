@@ -54,15 +54,17 @@
     .cell.sel { background: var(--sel); }
     .top { display: flex; justify-content: space-between; align-items: center; }
     .n { font-size: 12px; font-weight: 500; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; }
-    .cell.c0 .n { color: var(--sun); }
+    .cell.c0 .n, .cell.hol .n { color: var(--sun); }
     .cell.c6 .n { color: var(--sat); }
     .cell.today .n { background: var(--band); color: #fff; }
+    .hn { font-size: 9px; line-height: 1.1; color: var(--sun); font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
     .p { font-size: 10px; line-height: 1.2; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
     .cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--band); }
     .foot { padding: 10px 14px; border-top: 1px solid var(--line); }
     .foot h3 { margin: 0 0 4px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; }
     .li { display: flex; gap: 6px; align-items: baseline; width: 100%; font: inherit; font-size: 12px; color: var(--ink); background: none; border: 0; border-bottom: 1px dashed var(--line); padding: 5px 2px; cursor: pointer; text-align: left; }
     .li .d { min-width: 50px; color: var(--muted); }
+    .li.h .nm { color: var(--sun); font-weight: 500; }
     .memo-sec { background: var(--paper); color: var(--ink); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 14px 16px; border-top: 4px solid var(--band); }
     .memo-sec h2 { margin: 0 0 4px; font: 800 18px/1.3 'Nanum Myeongjo', Batang, serif; }
     .memo-body, textarea { display: block; width: 100%; min-height: 110px; font: inherit; font-size: 14px; line-height: 24px; color: var(--ink); background: var(--paper); border: 0; padding: 0; margin: 0; }
@@ -71,7 +73,7 @@
 </head>
 <body class="transition-colors duration-200">
 
-  <!-- 1. 메인 홈 화면 (버튼 2개) -->
+  <!-- 1. 메인 홈 화면 -->
   <div id="homeView" class="min-h-screen flex flex-col items-center justify-center p-6 space-y-6">
     <div class="text-center space-y-2">
       <div class="inline-block bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-2xl text-indigo-600 dark:text-indigo-400 mb-2 shadow-sm">
@@ -204,7 +206,7 @@
 
   <!-- 근무 등록/수정 모달창 -->
   <div id="entryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border dark:border-slate-700 w-full max-w-md overflow-hidden">
+    <div class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl shadow-xl border dark:border-slate-700 w-full max-w-md overflow-hidden">
       <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b dark:border-slate-700 flex items-center justify-between">
         <h3 id="modalTitle" class="text-lg font-bold">내역 등록</h3>
         <button type="button" id="closeModalBtn" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -222,12 +224,12 @@
         <div>
           <label class="block text-xs font-bold mb-1">구분 *</label>
           <select id="inputCategory" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
-            <option value="연장근무">연장근무</option>
-            <option value="휴일특근">휴일특근</option>
-            <option value="야간근무">야간근무</option>
-            <option value="연차">연차 (8h)</option>
-            <option value="반차">반차 (4h)</option>
-            <option value="조퇴">조퇴</option>
+            <option value="연장근무" class="dark:bg-slate-800">연장근무</option>
+            <option value="휴일특근" class="dark:bg-slate-800">휴일특근</option>
+            <option value="야간근무" class="dark:bg-slate-800">야간근무</option>
+            <option value="연차" class="dark:bg-slate-800">연차 (8h)</option>
+            <option value="반차" class="dark:bg-slate-800">반차 (4h)</option>
+            <option value="조퇴" class="dark:bg-slate-800">조퇴</option>
           </select>
         </div>
         <div>
@@ -481,33 +483,60 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 ---
+    // --- 2. 업무 일지 로직 (공휴일 및 오늘 날짜 정밀 계산 적용) ---
     let schedInitialized = false;
     function initScheduleApp() {
       if (schedInitialized) return;
       schedInitialized = true;
       var notes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1')||'{}');
-      var now = new Date(), tms = Date.UTC(now.getFullYear(), now.getMonth()+1, now.getDate());
-      function kk(ms){ var t=new Date(ms); return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(t.getUTCDate()).padStart(2,'0'); }
-      var todayKey=kk(tms), vy=now.getFullYear(), vm=now.getMonth(), sel=todayKey, editing=false;
+      
+      // 기기 로컬 날짜 기준 정확한 오늘 키 생성 (yyyy-mm-dd)
+      var dNow = new Date();
+      var todayKey = dNow.getFullYear() + '-' + String(dNow.getMonth() + 1).padStart(2, '0') + '-' + String(dNow.getDate()).padStart(2, '0');
+      
+      var vy = dNow.getFullYear(), vm = dNow.getMonth(), sel = todayKey, editing = false;
+
+      // 매년 고정 공휴일 체크 함수 (MM-DD)
+      function getHoliday(y, m, d) {
+        var mm = String(m + 1).padStart(2, '0');
+        var dd = String(d).padStart(2, '0');
+        var md = mm + '-' + dd;
+        var fixed = {
+          '01-01': '신정',
+          '03-01': '삼일절',
+          '05-05': '어린이날',
+          '06-06': '현충일',
+          '08-15': '광복절',
+          '10-03': '개천절',
+          '10-09': '한글날',
+          '12-25': '성탄절'
+        };
+        return fixed[md] || '';
+      }
 
       function renderSchedGrid(){
         document.getElementById('y').textContent = vy+'년';
         document.getElementById('m').textContent = (vm+1)+'월';
         var grid = document.getElementById('schedGrid');
         grid.innerHTML = '';
-        var first = new Date(Date.UTC(vy, vm, 1)).getUTCDay();
-        var days = new Date(Date.UTC(vy, vm+1, 0)).getUTCDate();
+        var first = new Date(vy, vm, 1).getDay();
+        var days = new Date(vy, vm + 1, 0).getDate();
         var total = Math.ceil((first+days)/7)*7;
 
         for(var i=0; i<total; i++){
           var d = i - first + 1;
           if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
-          var ms = Date.UTC(vy, vm, d), k = kk(ms), txt = notes[k]||'';
+          
+          var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          var txt = notes[k]||'';
+          var holName = getHoliday(vy, vm, d);
+          var isSun = (i % 7 === 0);
+          var isHol = (isSun || holName !== '');
+
           var b = document.createElement('button');
           b.type = 'button';
-          b.className = `cell c${i%7} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
-          b.innerHTML = `<div class="top"><span class="n">${d}</span></div>${txt?`<span class="p">${txt}</span>`:''}`;
+          b.className = `cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
+          b.innerHTML = `<div class="top"><span class="n">${d}</span>${holName?`<span class="hn">${holName}</span>`:''}</div>${txt?`<span class="p">${txt}</span>`:''}`;
           
           b.onclick = (function(dateKey) {
             return function() {
@@ -528,11 +557,12 @@
         document.getElementById('fh').textContent = (vm+1)+'월 주요 일정 및 메모';
         var any=false;
         for(var d=1; d<=days; d++){
-          var k = kk(Date.UTC(vy, vm, d));
-          if(notes[k]){
+          var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          var holName = getHoliday(vy, vm, d);
+          if(notes[k] || holName){
             any=true;
-            var li = document.createElement('button'); li.type = 'button'; li.className = 'li';
-            li.innerHTML = `<span class="d">${d}일</span><span class="nm">${notes[k]}</span>`;
+            var li = document.createElement('button'); li.type = 'button'; li.className = `li ${holName?'h':''}`;
+            li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${notes[k]||''}</span>`;
             li.onclick = (function(dateKey) {
               return function() {
                 sel = dateKey;
@@ -551,8 +581,9 @@
         var p = sel.split('-'); 
         var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
         var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+        var holName = getHoliday(+p[0], +p[1]-1, +p[2]);
         
-        document.getElementById('mTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}`;
+        document.getElementById('mTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
         document.getElementById('lunarInfo').textContent = `${p[0]}년 기록`;
 
         var txt = notes[sel]||'';
@@ -567,7 +598,14 @@
 
       document.getElementById('prev').onclick = () => { vm--; if(vm<0){vm=11;vy--;} renderSchedGrid(); renderMemo(); };
       document.getElementById('next').onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); renderMemo(); };
-      document.getElementById('today').onclick = () => { sel=todayKey; var a=todayKey.split('-'); vy=+a[0]; vm=+a[1]-1; renderSchedGrid(); renderMemo(); };
+      document.getElementById('today').onclick = () => { 
+        sel = todayKey; 
+        var a = todayKey.split('-'); 
+        vy = +a[0]; 
+        vm = +a[1]-1; 
+        renderSchedGrid(); 
+        renderMemo(); 
+      };
       document.getElementById('bEdit').onclick = () => { editing=true; renderMemo(); };
       document.getElementById('bCancel').onclick = () => { editing=false; renderMemo(); };
       document.getElementById('bSave').onclick = () => {
