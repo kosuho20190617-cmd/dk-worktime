@@ -11,7 +11,6 @@
   <!-- Google Fonts (Noto Sans KR, Nanum Myeongjo) -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* 휴대폰 시스템 테마(다크모드/라이트모드) 자동 대응 스타일 */
     :root {
       --desk: #f8fafc; --paper: #ffffff; --ink: #25282d; --muted: #80838a; --line: #e3e0d6;
       --sun: #c2392b; --sat: #3a6ea5; --band: #27418f; --band-ink: #fff; --sel: #fff3c4; --hole: #d8dbd4; --ren: #fdeeea;
@@ -29,47 +28,77 @@
       font-family: 'Noto Sans KR', sans-serif;
       margin: 0;
       padding: 0;
-      /* 상단바 영역까지 배경색이 자연스럽게 채워지도록 설정 */
       padding-top: env(safe-area-inset-top, 0px);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 업무 일지(일정) 스타일 */
-    .cal-wrap { width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-    .sheet { background: var(--paper); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-    .binding { height: 20px; background: radial-gradient(circle at 50% 52%, var(--hole) 0 4px, transparent 5px) 0 0/36px 20px repeat-x, var(--paper); border-bottom: 1px solid var(--line); }
-    .head-cal { background: var(--band); color: var(--band-ink); display: flex; align-items: flex-end; justify-content: space-between; padding: 12px 16px; gap: 8px; }
-    .ym small { display: block; font-size: 11px; opacity: .8; letter-spacing: .08em; }
-    .ym b { font: 800 clamp(24px, 6vw, 40px)/1.05 'Nanum Myeongjo', Batang, serif; }
-    .nav { display: flex; gap: 4px; }
-    .nav button { font: inherit; font-size: 13px; color: inherit; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); border-radius: 6px; min-width: 32px; height: 32px; padding: 0 8px; cursor: pointer; }
-    .dow, .grid { display: grid; grid-template-columns: repeat(7, 1fr); }
-    .dow div { text-align: center; padding: 6px 0; font-size: 11px; font-weight: 500; border-bottom: 1px solid var(--line); color: var(--muted); }
-    .dow div:first-child { color: var(--sun); }
-    .dow div:last-child { color: var(--sat); }
-    .cell { font: inherit; color: var(--ink); text-align: left; background: none; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 65px; padding: 3px 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; }
-    .cell:nth-child(7n) { border-right: 0; }
-    .cell.empty { cursor: default; background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line) 4px 5px); opacity: .45; }
-    .cell.sel { background: var(--sel); }
-    .top { display: flex; justify-content: space-between; align-items: center; }
-    .n { font-size: 12px; font-weight: 500; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; }
-    .cell.c0 .n, .cell.hol .n { color: var(--sun); }
-    .cell.c6 .n { color: var(--sat); }
-    .cell.today .n { background: var(--band); color: #fff; }
-    .hn { font-size: 9px; line-height: 1.1; color: var(--sun); font-weight: 500; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
-    .p { font-size: 10px; line-height: 1.2; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
-    .cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--band); }
-    .foot { padding: 10px 14px; border-top: 1px solid var(--line); }
-    .foot h3 { margin: 0 0 4px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; }
-    .li { display: flex; gap: 6px; align-items: baseline; width: 100%; font: inherit; font-size: 12px; color: var(--ink); background: none; border: 0; border-bottom: 1px dashed var(--line); padding: 5px 2px; cursor: pointer; text-align: left; }
-    .li .d { min-width: 50px; color: var(--muted); }
-    .li.h .nm { color: var(--sun); font-weight: 500; }
-    .memo-sec { background: var(--paper); color: var(--ink); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 14px 16px; border-top: 4px solid var(--band); }
-    .memo-sec h2 { margin: 0 0 4px; font: 800 18px/1.3 'Nanum Myeongjo', Batang, serif; }
-    .memo-body, textarea { display: block; width: 100%; min-height: 110px; font: inherit; font-size: 14px; line-height: 24px; color: var(--ink); background: var(--paper); border: 0; padding: 0; margin: 0; }
-    .memo-body { white-space: pre-wrap; word-break: break-word; }
+    /* 업무 일지 전용 어두운 테마 스타일 */
+    .schedule-dark-theme {
+      background-color: #0b0f19 !important;
+      color: #f1f5f9 !important;
+      min-height: 100vh;
+    }
+    .schedule-dark-theme .sched-sheet {
+      background: #111827 !important;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .schedule-dark-theme .sched-binding {
+      height: 18px;
+      background: radial-gradient(circle at 50% 52%, #0b0f19 0 4px, transparent 5px) 0 0/36px 18px repeat-x, #111827;
+      border-bottom: 1px solid #1f2937;
+    }
+    .schedule-dark-theme .sched-head {
+      background: linear-gradient(135deg, #1e1b4b, #311042);
+      color: #ffffff;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #2d3748;
+    }
+    .schedule-dark-theme .sched-ym small { display: block; font-size: 11px; opacity: .7; letter-spacing: .08em; color: #a5b4fc; }
+    .schedule-dark-theme .sched-ym b { font: 800 clamp(24px, 6vw, 38px)/1.05 'Nanum Myeongjo', Batang, serif; color: #ffffff; }
+    .schedule-dark-theme .sched-nav { display: flex; gap: 6px; }
+    .schedule-dark-theme .sched-nav button { font: inherit; font-size: 13px; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; min-width: 34px; height: 34px; padding: 0 10px; cursor: pointer; transition: background 0.2s; }
+    .schedule-dark-theme .sched-nav button:hover { background: rgba(255,255,255,.2); }
+    
+    .schedule-dark-theme .sched-dow, .schedule-dark-theme .sched-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .schedule-dark-theme .sched-dow div { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-bottom: 1px solid #1f2937; color: #9ca3af; }
+    .schedule-dark-theme .sched-dow div:first-child { color: #f87171; }
+    .schedule-dark-theme .sched-dow div:last-child { color: #60a5fa; }
+
+    .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; }
+    .schedule-dark-theme .sched-cell:nth-child(7n) { border-right: 0; }
+    .schedule-dark-theme .sched-cell:hover { background: #1f2937; }
+    .schedule-dark-theme .sched-cell.sel { background: #1e1b4b !important; border: 1px solid #6366f1; z-index: 10; }
+    
+    .schedule-dark-theme .sched-top { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-dark-theme .sched-n { font-size: 12px; font-weight: 600; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: #d1d5db; }
+    .schedule-dark-theme .sched-cell.c0 .sched-n, .schedule-dark-theme .sched-cell.hol .sched-n { color: #f87171; }
+    .schedule-dark-theme .sched-cell.c6 .sched-n { color: #60a5fa; }
+    .schedule-dark-theme .sched-cell.today .sched-n { background: #6366f1; color: #ffffff; }
+    
+    .schedule-dark-theme .sched-hn { font-size: 9px; line-height: 1.1; color: #f87171; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+    .schedule-dark-theme .sched-p { font-size: 10px; line-height: 1.2; color: #9ca3af; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+    .schedule-dark-theme .sched-cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #818cf8; }
+
+    .schedule-dark-theme .sched-foot { padding: 12px 16px; border-top: 1px solid #1f2937; background: #0f172a; }
+    .schedule-dark-theme .sched-foot h3 { margin: 0 0 6px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; color: #e2e8f0; }
+    .schedule-dark-theme .sched-li { display: flex; gap: 8px; align-items: baseline; width: 100%; font: inherit; font-size: 12px; color: #cbd5e1; background: none; border: 0; border-bottom: 1px dashed #1e293b; padding: 6px 2px; cursor: pointer; text-align: left; }
+    .schedule-dark-theme .sched-li:hover { color: #ffffff; background: rgba(255,255,255,0.02); }
+    .schedule-dark-theme .sched-li .d { min-width: 50px; color: #94a3b8; }
+    .schedule-dark-theme .sched-li.h .nm { color: #f87171; font-weight: 600; }
+
+    .schedule-dark-theme .sched-memo-sec { background: #111827; color: #f1f5f9; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); padding: 16px 20px; border-top: 4px solid #6366f1; border-left: 1px solid #1f2937; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; }
+    .schedule-dark-theme .sched-memo-sec h2 { margin: 0 0 4px; font: 800 18px/1.3 'Nanum Myeongjo', Batang, serif; color: #ffffff; }
+    .schedule-dark-theme .sched-memo-body, .schedule-dark-theme textarea { display: block; width: 100%; min-height: 120px; font: inherit; font-size: 14px; line-height: 24px; color: #e2e8f0; background: #111827; border: 0; padding: 0; margin: 0; resize: vertical; }
+    .schedule-dark-theme textarea { background: #0b0f19; border: 1px solid #374151; border-radius: 8px; padding: 10px; color: #fff; }
+    .schedule-dark-theme .sched-memo-body { white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
 <body class="transition-colors duration-200">
@@ -165,40 +194,42 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 -->
-  <div id="scheduleView" class="hidden min-h-screen flex flex-col p-2 sm:p-6" style="background-color: var(--desk);">
-    <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-900/10 dark:bg-white/10 p-2 rounded-xl">
-      <button type="button" onclick="goHome()" class="bg-slate-800 dark:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow">
+  <!-- 3. 업무 일지 화면 (다크 테마 재구성) -->
+  <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
+    <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
+      <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
         <i class="fa-solid fa-house"></i><span>홈으로</span>
       </button>
-      <span class="text-xs font-bold opacity-80">업무 일지 모드</span>
+      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5">
+        <i class="fa-solid fa-moon text-indigo-400"></i> 업무 일지 다크 모드
+      </span>
     </div>
 
-    <div class="cal-wrap">
-      <div class="sheet">
-        <div class="binding" aria-hidden="true"></div>
-        <div class="head-cal">
-          <div class="ym"><small id="y"></small><b id="m"></b></div>
-          <div class="nav">
+    <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto">
+      <div class="sched-sheet">
+        <div class="sched-binding" aria-hidden="true"></div>
+        <div class="sched-head">
+          <div class="sched-ym"><small id="y"></small><b id="m"></b></div>
+          <div class="sched-nav">
             <button type="button" id="prev" aria-label="이전 달">◀</button>
             <button type="button" id="today">오늘</button>
             <button type="button" id="next" aria-label="다음 달">▶</button>
           </div>
         </div>
-        <div class="dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
-        <div class="grid" id="schedGrid"></div>
-        <div class="foot"><h3 id="fh"></h3><div id="list"></div></div>
+        <div class="sched-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+        <div class="sched-grid" id="schedGrid"></div>
+        <div class="sched-foot"><h3 id="fh"></h3><div id="list"></div></div>
       </div>
 
-      <section class="memo-sec" id="memo" aria-live="polite">
+      <section class="sched-memo-sec" id="memo" aria-live="polite">
         <h2 id="mTitle"></h2>
-        <div id="lunarInfo" style="font-size: 11px; opacity: 0.7; margin-bottom: 8px;"></div>
-        <div class="memo-body" id="mBody"></div>
+        <div id="lunarInfo" style="font-size: 11px; opacity: 0.7; margin-bottom: 8px; color: #94a3b8;"></div>
+        <div class="sched-memo-body" id="mBody"></div>
         <textarea id="mEdit" hidden aria-label="내용" placeholder="이 날의 일정이나 메모를 적어 보세요."></textarea>
-        <div class="actions" style="display:flex; gap:8px; margin-top:10px;">
-          <button type="button" id="bEdit" style="padding:6px 14px; border-radius:6px; background:var(--paper); border:1px solid var(--line); cursor:pointer; font-size:13px;">수정</button>
-          <button type="button" id="bSave" class="primary" hidden style="padding:6px 14px; border-radius:6px; background:var(--band); color:#fff; border:0; cursor:pointer; font-size:13px;">저장</button>
-          <button type="button" id="bCancel" hidden style="padding:6px 14px; border-radius:6px; background:var(--paper); border:1px solid var(--line); cursor:pointer; font-size:13px;">취소</button>
+        <div class="actions" style="display:flex; gap:8px; margin-top:12px;">
+          <button type="button" id="bEdit" style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#e2e8f0; border:1px solid #374151; cursor:pointer; font-size:13px; font-weight:500;">수정</button>
+          <button type="button" id="bSave" class="primary" hidden style="padding:6px 16px; border-radius:8px; background:#6366f1; color:#fff; border:0; cursor:pointer; font-size:13px; font-weight:600;">저장</button>
+          <button type="button" id="bCancel" hidden style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#9ca3af; border:1px solid #374151; cursor:pointer; font-size:13px;">취소</button>
           <span id="msg" style="font-size:12px; opacity:0.7; align-self:center;"></span>
         </div>
       </section>
@@ -484,7 +515,7 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 ---
+    // --- 2. 업무 일지 로직 (다크 테마 적용) ---
     let schedInitialized = false;
     function initScheduleApp() {
       if (schedInitialized) return;
@@ -573,8 +604,8 @@
 
           var b = document.createElement('button');
           b.type = 'button';
-          b.className = `cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
-          b.innerHTML = `<div class="top"><span class="n">${d}</span>${holName?`<span class="hn">${holName}</span>`:''}</div>${txt?`<span class="p">${txt}</span>`:''}`;
+          b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
+          b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
           
           b.onclick = (function(dateKey) {
             return function() {
@@ -603,7 +634,7 @@
           var holName = holidayMap[k] || '';
           if(notes[k] || holName){
             any=true;
-            var li = document.createElement('button'); li.type = 'button'; li.className = `li ${holName?'h':''}`;
+            var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
             li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${notes[k]||''}</span>`;
             li.onclick = (function(dateKey) {
               return function() {
@@ -616,7 +647,7 @@
             L.appendChild(li);
           }
         }
-        if(!any) L.innerHTML = `<p class="text-xs opacity-60 py-1">작성된 메모가 없습니다.</p>`;
+        if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
       }
 
       function renderMemo(){
@@ -645,7 +676,7 @@
         if (bCancel) bCancel.hidden = !editing;
 
         if(editing){ edit.value = txt; edit.focus(); }
-        else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'memo-body' + (txt ? '' : ' opacity-50'); }
+        else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'sched-memo-body' + (txt ? '' : ' text-slate-500'); }
       }
 
       var prevBtn = document.getElementById('prev');
