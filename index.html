@@ -136,7 +136,7 @@
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition"><i class="fa-solid fa-house"></i><span>홈으로</span></button>
-      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지) v3</span>
+      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)</span>
     </div>
     <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
   <!-- 업무 일지 직접 추가/관리 모달 -->
@@ -452,7 +452,14 @@
 
       document.getElementById('deleteModalBtn').onclick = async () => {
         const id = document.getElementById('recordId').value;
-        if(confirm('삭제하시겠습니까?')) {
+        const dbtn = document.getElementById('deleteModalBtn');
+        if (dbtn.dataset.armed !== '1') {
+          dbtn.dataset.armed = '1'; dbtn.textContent = '한 번 더 누르면 삭제';
+          setTimeout(function(){ dbtn.dataset.armed = ''; dbtn.textContent = '삭제'; }, 3000);
+          return;
+        }
+        dbtn.dataset.armed = ''; dbtn.textContent = '삭제';
+        {
           records = records.filter(r => r.id.toString() !== id.toString());
           await sendDataToSheet({ action: 'delete', id });
           document.getElementById('entryModal').classList.add('hidden');
@@ -508,7 +515,7 @@
       document.getElementById('inputCategory').value = r.category;
       document.getElementById('inputHours').value = r.hours;
       document.getElementById('inputMemo').value = r.memo || '';
-      document.getElementById('entryModal').classList.add('hidden');
+      document.getElementById('entryModal').classList.remove('hidden');
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
@@ -667,7 +674,8 @@
       var btn = document.getElementById('addSchedTaskBtn');
 
       if (!dateVal || !fac || !tsk) {
-        alert('날짜, 설비명, 작업 내용을 모두 입력해 주세요.');
+        msg.style.color = '#f87171';
+        msg.textContent = '날짜, 설비명, 작업 내용을 모두 입력해 주세요.';
         return;
       }
 
@@ -719,18 +727,22 @@
             <span style="display: inline-block; background: #311042; color: #a5b4fc; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #4c1d95; margin-bottom: 3px;">${task.facility}</span>
             <p style="margin: 0; font-size: 12px; color: #e5e7eb; word-break: break-all; white-space: pre-wrap;">${task.memo}</p>
           </div>
-          <button type="button" onclick="deleteSchedTask('${task.id}')" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px;" title="삭제"><i class="fa-solid fa-trash-can" style="font-size: 12px;"></i></button>
+          <button type="button" data-del-id="${task.id}" style="background: none; border: 1px solid transparent; border-radius: 6px; color: #9ca3af; cursor: pointer; padding: 8px 10px; min-width: 40px; min-height: 36px; flex-shrink: 0;" title="삭제"><i class="fa-solid fa-trash-can" style="font-size: 14px; pointer-events: none;"></i></button>
         `;
         container.appendChild(div);
       });
     }
 
     async function deleteSchedTask(id) {
-      if (!confirm('해당 설비 작업을 삭제하시겠습니까?')) return;
       var item = scheduleList.find(function(t){ return String(t.id) === String(id); });
       var msg = document.getElementById('schedModalMsg');
       msg.style.color = '#fbbf24';
       msg.textContent = '삭제 중...';
+
+      // 화면에서 먼저 제거
+      scheduleList = scheduleList.filter(function(t){ return String(t.id) !== String(id); });
+      renderSchedGrid();
+      try { renderModalTaskList(); } catch (e) {}
 
       if (item && String(id).indexOf('tmp-') !== 0) {
         await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id, date: item.date, facility: item.facility, memo: item.memo });
@@ -746,6 +758,21 @@
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('[data-sched-open]')) { e.preventDefault(); openNewSchedModal(); return; }
+      var del = t.closest('[data-del-id]');
+      if (del) {
+        e.preventDefault();
+        if (del.getAttribute('data-armed') === '1') {
+          deleteSchedTask(del.getAttribute('data-del-id'));
+        } else {
+          del.setAttribute('data-armed', '1');
+          del.style.cssText += ';background:#b91c1c;color:#fff;border-color:#ef4444;';
+          del.innerHTML = '<span style="font-size:12px;font-weight:bold;pointer-events:none;">삭제?</span>';
+          var m = document.getElementById('schedModalMsg');
+          if (m) { m.style.color = '#fbbf24'; m.textContent = '삭제하려면 빨간 버튼을 한 번 더 누르세요'; }
+          setTimeout(function(){ try { renderModalTaskList(); } catch (er) {} }, 3000);
+        }
+        return;
+      }
       if (t.closest('[data-sched-close]')) { e.preventDefault(); closeSchedModal(); return; }
       if (t.closest('#addSchedTaskBtn')) { e.preventDefault(); submitSchedTask(); return; }
     });
