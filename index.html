@@ -276,6 +276,13 @@
       return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
     }
 
+    function fmtKorDate(dateStr) {
+      var p = parseLocalDate(dateStr);
+      if (!p) return String(dateStr || '');
+      var dow = ['일','월','화','수','목','금','토'][new Date(p.y, p.m - 1, p.d).getDay()];
+      return p.y + '년 ' + String(p.m).padStart(2, '0') + '월 ' + String(p.d).padStart(2, '0') + '일(' + dow + ')';
+    }
+
     function goHome() {
       document.getElementById('homeView').classList.remove('hidden');
       document.getElementById('workView').classList.add('hidden');
@@ -340,6 +347,11 @@
     function parseLocalDate(dateStr) {
       if (!dateStr) return null;
       var s = String(dateStr).trim();
+      var mm = s.match(/^[A-Za-z]{3}\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4})/);
+      if (mm) {
+        var mi = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(mm[1]);
+        if (mi >= 0) return { y: parseInt(mm[3], 10), m: mi + 1, d: parseInt(mm[2], 10) };
+      }
       if (s.includes('T') || s.includes('Z')) {
         var d = new Date(s);
         if (!isNaN(d.getTime())) {
@@ -767,7 +779,7 @@
         div.style.cssText = 'background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;';
         div.innerHTML = `
           <div style="overflow: hidden;">
-            <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">${task.date}</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">${fmtKorDate(task.date)}</div>
             <span style="display: inline-block; background: #311042; color: #a5b4fc; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #4c1d95; margin-bottom: 3px;">${task.facility}</span>
             <p style="margin: 0; font-size: 12px; color: #e5e7eb; word-break: break-all; white-space: pre-wrap;">${task.memo}</p>
           </div>
