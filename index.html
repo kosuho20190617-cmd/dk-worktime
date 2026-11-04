@@ -33,12 +33,12 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 업무 일지 전용 다크 테마 스타일 (상단 상태바 대비 최적화) */
+    /* 업무 일지 전용 다크 테마 스타일 (상단 상태바 침범 방지 여백 적용) */
     .schedule-dark-theme {
       background-color: #0b0f19 !important;
       color: #f1f5f9 !important;
       min-height: 100vh;
-      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      padding-top: max(env(safe-area-inset-top, 0px), 36px) !important;
     }
     .schedule-dark-theme .sched-sheet {
       background: #111827 !important;
@@ -119,7 +119,7 @@
           <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-clock text-xl"></i></div>
           <div class="text-left">
             <div class="text-lg font-bold">근무 및 연차</div>
-            <div class="text-xs text-indigo-200">구글 시트 실시간 연동 관리</div>
+            <div class="text-xs text-indigo-200">연장,특근 근무 및 연차 관리</div>
           </div>
         </div>
         <i class="fa-solid fa-chevron-right text-indigo-200 group-hover:translate-x-1 transition"></i>
@@ -130,7 +130,7 @@
           <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-calendar-days text-xl"></i></div>
           <div class="text-left">
             <div class="text-lg font-bold">업무 일지</div>
-            <div class="text-xs text-emerald-100">일정 메모 관리</div>
+            <div class="text-xs text-emerald-100">업무 내용 관리</div>
           </div>
         </div>
         <i class="fa-solid fa-chevron-right text-emerald-200 group-hover:translate-x-1 transition"></i>
@@ -194,14 +194,14 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (상단바 여백 및 가시성 최적화) -->
+  <!-- 3. 업무 일지 화면 (상단 여백 확보 및 구글 시트 연동) -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
         <i class="fa-solid fa-house"></i><span>홈으로</span>
       </button>
       <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5">
-        <i class="fa-solid fa-moon text-indigo-400"></i> 업무 일지 다크 모드
+        <i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)
       </span>
     </div>
 
@@ -230,7 +230,7 @@
           <button type="button" id="bEdit" style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#e2e8f0; border:1px solid #374151; cursor:pointer; font-size:13px; font-weight:500;">수정</button>
           <button type="button" id="bSave" class="primary" hidden style="padding:6px 16px; border-radius:8px; background:#6366f1; color:#fff; border:0; cursor:pointer; font-size:13px; font-weight:600;">저장</button>
           <button type="button" id="bCancel" hidden style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#9ca3af; border:1px solid #374151; cursor:pointer; font-size:13px;">취소</button>
-          <span id="msg" style="font-size:12px; opacity:0.7; align-self:center;"></span>
+          <span id="schedMsg" style="font-size:12px; color:#34d399; align-self:center; font-weight:500;"></span>
         </div>
       </section>
     </div>
@@ -515,99 +515,164 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (다크 테마 적용) ---
+    // --- 2. 업무 일지 로직 (구글 시트 연동 포함) ---
     let schedInitialized = false;
-    function initScheduleApp() {
-      if (schedInitialized) return;
-      schedInitialized = true;
-      var notes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1')||'{}');
-      
-      var dNow = new Date();
-      var todayKey = dNow.getFullYear() + '-' + String(dNow.getMonth() + 1).padStart(2, '0') + '-' + String(dNow.getDate()).padStart(2, '0');
-      var vy = dNow.getFullYear(), vm = dNow.getMonth(), sel = todayKey, editing = false;
+    let scheduleNotes = {};
 
-      function getHolidaysOfYear(year) {
-        var hMap = {};
-        var fixed = {
-          '01-01': '신정',
-          '03-01': '삼일절',
-          '05-05': '어린이날',
-          '06-06': '현충일',
-          '08-15': '광복절',
-          '10-03': '개천절',
-          '10-09': '한글날',
-          '12-25': '성탄절'
-        };
+    async function initScheduleApp() {
+      if (!schedInitialized) {
+        setupScheduleEventListeners();
+        schedInitialized = true;
+      }
+      await fetchScheduleFromSheet();
+    }
 
-        for (var md in fixed) {
-          hMap[year + '-' + md] = fixed[md];
+    async function fetchScheduleFromSheet() {
+      try {
+        const res = await fetch(SCRIPT_URL + '?type=schedule');
+        const data = await res.json();
+        scheduleNotes = {};
+        if (Array.isArray(data)) {
+          data.forEach(item => {
+            if (item.date && item.memo) {
+              scheduleNotes[item.date] = item.memo;
+            }
+          });
         }
+      } catch (e) {
+        // 네트워크 실패 시 로컬스토리지 백업 데이터 활용
+        scheduleNotes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1') || '{}');
+      }
+      renderSchedGrid();
+      renderMemo();
+    }
 
-        var lunarData = {
-          2024: { seol: ['2024-02-09', '2024-02-10', '2024-02-11'], seolAlt: '2024-02-12', buddha: '2024-05-15', chuseok: ['2024-09-16', '2024-09-17', '2024-09-18'] },
-          2025: { seol: ['2025-01-28', '2025-01-29', '2025-01-30'], seolAlt: null, buddha: '2025-05-05', chuseok: ['2025-10-05', '2025-10-06', '2025-10-07'], chuseokAlt: '2025-10-08' },
-          2026: { seol: ['2026-02-16', '2026-02-17', '2026-02-18'], seolAlt: null, buddha: '2026-05-24', buddhaAlt: '2026-05-25', chuseok: ['2026-09-24', '2026-09-25', '2026-09-26'] },
-          2027: { seol: ['2027-02-05', '2027-02-06', '2027-02-07'], seolAlt: '2027-02-08', buddha: '2027-05-13', chuseok: ['2027-09-14', '2027-09-15', '2027-09-16'] },
-          2028: { seol: ['2028-01-25', '2028-01-26', '2028-01-27'], seolAlt: null, buddha: '2028-05-02', chuseok: ['2028-10-02', '2028-10-03', '2028-10-04'] },
-          2029: { seol: ['2029-02-12', '2029-02-13', '2029-02-14'], seolAlt: null, buddha: '2029-05-20', buddhaAlt: '2029-05-21', chuseok: ['2029-09-21', '2029-09-22', '2029-09-23'], chuseokAlt: '2029-09-24' },
-          2030: { seol: ['2030-02-01', '2030-02-02', '2030-02-03'], seolAlt: '2030-02-04', buddha: '2030-05-09', chuseok: ['2030-09-11', '2030-09-12', '2030-09-13'] }
-        };
-
-        var curL = lunarData[year];
-        if (curL) {
-          if (curL.seol) curL.seol.forEach((d, idx) => { hMap[d] = idx === 0 ? '설날 전날' : idx === 1 ? '설날' : '설날 다음날'; });
-          if (curL.seolAlt) hMap[curL.seolAlt] = '대체공휴일';
-          if (curL.chuseok) curL.chuseok.forEach((d, idx) => { hMap[d] = idx === 0 ? '추석 전날' : idx === 1 ? '추석' : '추석 다음날'; });
-          if (curL.chuseokAlt) hMap[curL.chuseokAlt] = '대체공휴일';
-          if (curL.buddha) hMap[curL.buddha] = '부처님오신날';
-          if (curL.buddhaAlt) hMap[curL.buddhaAlt] = '대체공휴일';
-        }
-
-        Object.keys(hMap).forEach(dateStr => {
-          var dt = new Date(dateStr);
-          if (dt.getDay() === 0) {
-            var nextDay = new Date(dt);
-            nextDay.setDate(dt.getDate() + 1);
-            var nStr = nextDay.toISOString().split('T')[0];
-            if (!hMap[nStr]) hMap[nStr] = '대체공휴일';
-          }
+    async function saveScheduleToSheet(dateKey, memoText) {
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'schedule', date: dateKey, memo: memoText })
         });
+      } catch (e) { console.error(e); }
+    }
 
-        return hMap;
+    function getHolidaysOfYear(year) {
+      var hMap = {};
+      var fixed = {
+        '01-01': '신정',
+        '03-01': '삼일절',
+        '05-05': '어린이날',
+        '06-06': '현충일',
+        '08-15': '광복절',
+        '10-03': '개천절',
+        '10-09': '한글날',
+        '12-25': '성탄절'
+      };
+
+      for (var md in fixed) {
+        hMap[year + '-' + md] = fixed[md];
       }
 
-      function renderSchedGrid(){
-        var yEl = document.getElementById('y');
-        var mEl = document.getElementById('m');
-        if (yEl) yEl.textContent = vy+'년';
-        if (mEl) mEl.textContent = (vm+1)+'월';
+      var lunarData = {
+        2024: { seol: ['2024-02-09', '2024-02-10', '2024-02-11'], seolAlt: '2024-02-12', buddha: '2024-05-15', chuseok: ['2024-09-16', '2024-09-17', '2024-09-18'] },
+        2025: { seol: ['2025-01-28', '2025-01-29', '2025-01-30'], seolAlt: null, buddha: '2025-05-05', chuseok: ['2025-10-05', '2025-10-06', '2025-10-07'], chuseokAlt: '2025-10-08' },
+        2026: { seol: ['2026-02-16', '2026-02-17', '2026-02-18'], seolAlt: null, buddha: '2026-05-24', buddhaAlt: '2026-05-25', chuseok: ['2026-09-24', '2026-09-25', '2026-09-26'] },
+        2027: { seol: ['2027-02-05', '2027-02-06', '2027-02-07'], seolAlt: '2027-02-08', buddha: '2027-05-13', chuseok: ['2027-09-14', '2027-09-15', '2027-09-16'] },
+        2028: { seol: ['2028-01-25', '2028-01-26', '2028-01-27'], seolAlt: null, buddha: '2028-05-02', chuseok: ['2028-10-02', '2028-10-03', '2028-10-04'] },
+        2029: { seol: ['2029-02-12', '2029-02-13', '2029-02-14'], seolAlt: null, buddha: '2029-05-20', buddhaAlt: '2029-05-21', chuseok: ['2029-09-21', '2029-09-22', '2029-09-23'], chuseokAlt: '2029-09-24' },
+        2030: { seol: ['2030-02-01', '2030-02-02', '2030-02-03'], seolAlt: '2030-02-04', buddha: '2030-05-09', chuseok: ['2030-09-11', '2030-09-12', '2030-09-13'] }
+      };
 
-        var grid = document.getElementById('schedGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
+      var curL = lunarData[year];
+      if (curL) {
+        if (curL.seol) curL.seol.forEach((d, idx) => { hMap[d] = idx === 0 ? '설날 전날' : idx === 1 ? '설날' : '설날 다음날'; });
+        if (curL.seolAlt) hMap[curL.seolAlt] = '대체공휴일';
+        if (curL.chuseok) curL.chuseok.forEach((d, idx) => { hMap[d] = idx === 0 ? '추석 전날' : idx === 1 ? '추석' : '추석 다음날'; });
+        if (curL.chuseokAlt) hMap[curL.chuseokAlt] = '대체공휴일';
+        if (curL.buddha) hMap[curL.buddha] = '부처님오신날';
+        if (curL.buddhaAlt) hMap[curL.buddhaAlt] = '대체공휴일';
+      }
+
+      Object.keys(hMap).forEach(dateStr => {
+        var dt = new Date(dateStr);
+        if (dt.getDay() === 0) {
+          var nextDay = new Date(dt);
+          nextDay.setDate(dt.getDate() + 1);
+          var nStr = nextDay.toISOString().split('T')[0];
+          if (!hMap[nStr]) hMap[nStr] = '대체공휴일';
+        }
+      });
+
+      return hMap;
+    }
+
+    var dNow = new Date();
+    var todayKey = dNow.getFullYear() + '-' + String(dNow.getMonth() + 1).padStart(2, '0') + '-' + String(dNow.getDate()).padStart(2, '0');
+    var vy = dNow.getFullYear(), vm = dNow.getMonth(), sel = todayKey, editing = false;
+
+    function renderSchedGrid(){
+      var yEl = document.getElementById('y');
+      var mEl = document.getElementById('m');
+      if (yEl) yEl.textContent = vy+'년';
+      if (mEl) mEl.textContent = (vm+1)+'월';
+
+      var grid = document.getElementById('schedGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      
+      var first = new Date(vy, vm, 1).getDay();
+      var days = new Date(vy, vm + 1, 0).getDate();
+      var total = Math.ceil((first+days)/7)*7;
+
+      var holidayMap = getHolidaysOfYear(vy);
+
+      for(var i=0; i<total; i++){
+        var d = i - first + 1;
+        if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
         
-        var first = new Date(vy, vm, 1).getDay();
-        var days = new Date(vy, vm + 1, 0).getDate();
-        var total = Math.ceil((first+days)/7)*7;
+        var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        var txt = scheduleNotes[k]||'';
+        var holName = holidayMap[k] || '';
+        var isSun = (i % 7 === 0);
+        var isHol = (isSun || holName !== '');
 
-        var holidayMap = getHolidaysOfYear(vy);
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
+        b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
+        
+        b.onclick = (function(dateKey) {
+          return function() {
+            sel = dateKey;
+            editing = false;
+            renderSchedGrid();
+            renderMemo();
+          };
+        })(k);
 
-        for(var i=0; i<total; i++){
-          var d = i - first + 1;
-          if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
-          
-          var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-          var txt = notes[k]||'';
-          var holName = holidayMap[k] || '';
-          var isSun = (i % 7 === 0);
-          var isHol = (isSun || holName !== '');
+        grid.appendChild(b);
+      }
+      renderSchedList(days, holidayMap);
+    }
 
-          var b = document.createElement('button');
-          b.type = 'button';
-          b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
-          b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
-          
-          b.onclick = (function(dateKey) {
+    function renderSchedList(days, holidayMap){
+      var L = document.getElementById('list'); 
+      if (!L) return;
+      L.innerHTML = '';
+      var fh = document.getElementById('fh');
+      if (fh) fh.textContent = (vm+1)+'월 주요 일정 및 메모';
+      
+      var any=false;
+      for(var d=1; d<=days; d++){
+        var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        var holName = holidayMap[k] || '';
+        if(scheduleNotes[k] || holName){
+          any=true;
+          var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
+          li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${scheduleNotes[k]||''}</span>`;
+          li.onclick = (function(dateKey) {
             return function() {
               sel = dateKey;
               editing = false;
@@ -615,70 +680,43 @@
               renderMemo();
             };
           })(k);
-
-          grid.appendChild(b);
+          L.appendChild(li);
         }
-        renderSchedList(days, holidayMap);
       }
+      if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
+    }
 
-      function renderSchedList(days, holidayMap){
-        var L = document.getElementById('list'); 
-        if (!L) return;
-        L.innerHTML = '';
-        var fh = document.getElementById('fh');
-        if (fh) fh.textContent = (vm+1)+'월 주요 일정 및 메모';
-        
-        var any=false;
-        for(var d=1; d<=days; d++){
-          var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-          var holName = holidayMap[k] || '';
-          if(notes[k] || holName){
-            any=true;
-            var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
-            li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${notes[k]||''}</span>`;
-            li.onclick = (function(dateKey) {
-              return function() {
-                sel = dateKey;
-                editing = false;
-                renderSchedGrid();
-                renderMemo();
-              };
-            })(k);
-            L.appendChild(li);
-          }
-        }
-        if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
-      }
+    function renderMemo(){
+      var p = sel.split('-'); 
+      var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
+      var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+      var holidayMap = getHolidaysOfYear(+p[0]);
+      var holName = holidayMap[sel] || '';
+      
+      var mTitle = document.getElementById('mTitle');
+      var lunarInfo = document.getElementById('lunarInfo');
+      if (mTitle) mTitle.textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
+      if (lunarInfo) lunarInfo.textContent = `${p[0]}년 기록`;
 
-      function renderMemo(){
-        var p = sel.split('-'); 
-        var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
-        var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-        var holidayMap = getHolidaysOfYear(+p[0]);
-        var holName = holidayMap[sel] || '';
-        
-        var mTitle = document.getElementById('mTitle');
-        var lunarInfo = document.getElementById('lunarInfo');
-        if (mTitle) mTitle.textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
-        if (lunarInfo) lunarInfo.textContent = `${p[0]}년 기록`;
+      var txt = scheduleNotes[sel]||'';
+      var body = document.getElementById('mBody'), edit = document.getElementById('mEdit');
+      if (!body || !edit) return;
 
-        var txt = notes[sel]||'';
-        var body = document.getElementById('mBody'), edit = document.getElementById('mEdit');
-        if (!body || !edit) return;
+      body.hidden = editing; edit.hidden = !editing;
+      var bEdit = document.getElementById('bEdit');
+      var bSave = document.getElementById('bSave');
+      var bCancel = document.getElementById('bCancel');
 
-        body.hidden = editing; edit.hidden = !editing;
-        var bEdit = document.getElementById('bEdit');
-        var bSave = document.getElementById('bSave');
-        var bCancel = document.getElementById('bCancel');
+      if (bEdit) bEdit.hidden = editing;
+      if (bSave) bSave.hidden = !editing;
+      if (bCancel) bCancel.hidden = !editing;
 
-        if (bEdit) bEdit.hidden = editing;
-        if (bSave) bSave.hidden = !editing;
-        if (bCancel) bCancel.hidden = !editing;
+      if(editing){ edit.value = txt; edit.focus(); }
+      else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'sched-memo-body' + (txt ? '' : ' text-slate-500'); }
+      document.getElementById('schedMsg').textContent = '';
+    }
 
-        if(editing){ edit.value = txt; edit.focus(); }
-        else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'sched-memo-body' + (txt ? '' : ' text-slate-500'); }
-      }
-
+    function setupScheduleEventListeners() {
       var prevBtn = document.getElementById('prev');
       var nextBtn = document.getElementById('next');
       var todayBtn = document.getElementById('today');
@@ -698,16 +736,22 @@
       };
       if (bEditBtn) bEditBtn.onclick = () => { editing=true; renderMemo(); };
       if (bCancelBtn) bCancelBtn.onclick = () => { editing=false; renderMemo(); };
-      if (bSaveBtn) bSaveBtn.onclick = () => {
+      if (bSaveBtn) bSaveBtn.onclick = async () => {
         var editEl = document.getElementById('mEdit');
         if (!editEl) return;
         var v = editEl.value.trim();
-        if(v) notes[sel] = v; else delete notes[sel];
-        localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(notes));
-        editing=false; renderSchedGrid(); renderMemo();
-      };
+        if(v) scheduleNotes[sel] = v; else delete scheduleNotes[sel];
+        
+        // 로컬스토리지 백업 및 구글 시트 전송
+        localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(scheduleNotes));
+        document.getElementById('schedMsg').textContent = '저장 중...';
+        await saveScheduleToSheet(sel, v);
+        document.getElementById('schedMsg').textContent = '구글 시트 저장 완료!';
 
-      renderSchedGrid(); renderMemo();
+        editing=false; 
+        renderSchedGrid(); 
+        renderMemo();
+      };
     }
   </script>
 </body>
