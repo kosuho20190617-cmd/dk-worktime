@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>통합 관리 시스템</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts (Noto Sans KR, Nanum Myeongjo) -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -21,72 +18,33 @@
         --sun: #ef7b6e; --sat: #7fb0e6; --band: #3a55b0; --band-ink: #fff; --sel: #3a331c; --hole: #121417; --ren: #352a29;
       }
     }
-
-    html, body {
-      background-color: var(--desk);
-      color: var(--ink);
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
+    html, body { background-color: var(--desk); color: var(--ink); font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* 업무 일지 전용 다크 테마 스타일 */
-    .schedule-dark-theme {
-      background-color: #0b0f19 !important;
-      color: #f1f5f9 !important;
-      min-height: 100vh;
-      padding-top: max(env(safe-area-inset-top, 0px), 36px) !important;
-    }
-    .schedule-dark-theme .sched-sheet {
-      background: #111827 !important;
-      border: 1px solid #1f2937;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-      overflow: hidden;
-    }
-    .schedule-dark-theme .sched-binding {
-      height: 18px;
-      background: radial-gradient(circle at 50% 52%, #0b0f19 0 4px, transparent 5px) 0 0/36px 18px repeat-x, #111827;
-      border-bottom: 1px solid #1f2937;
-    }
-    .schedule-dark-theme .sched-head {
-      background: linear-gradient(135deg, #1e1b4b, #311042);
-      color: #ffffff;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      padding: 14px 18px;
-      border-bottom: 1px solid #2d3748;
-    }
+    .schedule-dark-theme { background-color: #0b0f19 !important; color: #f1f5f9 !important; min-height: 100vh; padding-top: max(env(safe-area-inset-top, 0px), 36px) !important; }
+    .schedule-dark-theme .sched-sheet { background: #111827 !important; border: 1px solid #1f2937; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); overflow: hidden; }
+    .schedule-dark-theme .sched-binding { height: 18px; background: radial-gradient(circle at 50% 52%, #0b0f19 0 4px, transparent 5px) 0 0/36px 18px repeat-x, #111827; border-bottom: 1px solid #1f2937; }
+    .schedule-dark-theme .sched-head { background: linear-gradient(135deg, #1e1b4b, #311042); color: #ffffff; display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #2d3748; }
     .schedule-dark-theme .sched-ym small { display: block; font-size: 11px; opacity: .7; letter-spacing: .08em; color: #a5b4fc; }
     .schedule-dark-theme .sched-ym b { font: 800 clamp(24px, 6vw, 38px)/1.05 'Nanum Myeongjo', Batang, serif; color: #ffffff; }
     .schedule-dark-theme .sched-nav { display: flex; gap: 6px; }
     .schedule-dark-theme .sched-nav button { font: inherit; font-size: 13px; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; min-width: 34px; height: 34px; padding: 0 10px; cursor: pointer; transition: background 0.2s; }
     .schedule-dark-theme .sched-nav button:hover { background: rgba(255,255,255,.2); }
-    
     .schedule-dark-theme .sched-dow, .schedule-dark-theme .sched-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
     .schedule-dark-theme .sched-dow div { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-bottom: 1px solid #1f2937; color: #9ca3af; }
     .schedule-dark-theme .sched-dow div:first-child { color: #f87171; }
     .schedule-dark-theme .sched-dow div:last-child { color: #60a5fa; }
-
     .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; }
     .schedule-dark-theme .sched-cell:nth-child(7n) { border-right: 0; }
     .schedule-dark-theme .sched-cell:hover { background: #1f2937; }
-    .schedule-dark-theme .sched-cell.sel { background: #1e1b4b !important; border: 1px solid #6366f1; z-index: 10; }
-    
     .schedule-dark-theme .sched-top { display: flex; justify-content: space-between; align-items: center; }
     .schedule-dark-theme .sched-n { font-size: 12px; font-weight: 600; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: #d1d5db; }
     .schedule-dark-theme .sched-cell.c0 .sched-n, .schedule-dark-theme .sched-cell.hol .sched-n { color: #f87171; }
     .schedule-dark-theme .sched-cell.c6 .sched-n { color: #60a5fa; }
     .schedule-dark-theme .sched-cell.today .sched-n { background: #6366f1; color: #ffffff; }
-    
     .schedule-dark-theme .sched-hn { font-size: 9px; line-height: 1.1; color: #f87171; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
     .schedule-dark-theme .sched-p { font-size: 10px; line-height: 1.2; color: #9ca3af; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
     .schedule-dark-theme .sched-cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #818cf8; }
-
     .schedule-dark-theme .sched-foot { padding: 12px 16px; border-top: 1px solid #1f2937; background: #0f172a; }
     .schedule-dark-theme .sched-foot h3 { margin: 0 0 6px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; color: #e2e8f0; }
     .schedule-dark-theme .sched-li { display: flex; gap: 8px; align-items: baseline; width: 100%; font: inherit; font-size: 12px; color: #cbd5e1; background: none; border: 0; border-bottom: 1px dashed #1e293b; padding: 6px 2px; cursor: pointer; text-align: left; }
@@ -97,7 +55,7 @@
 </head>
 <body class="transition-colors duration-200">
 
-  <!-- 1. 메인 홈 화면 -->
+  <!-- 1. 홈 화면 -->
   <div id="homeView" class="min-h-screen flex flex-col items-center justify-center p-6 space-y-6">
     <div class="text-center space-y-2">
       <div class="inline-block bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-2xl text-indigo-600 dark:text-indigo-400 mb-2 shadow-sm">
@@ -106,7 +64,6 @@
       <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">근무 및 업무 통합 시스템</h1>
       <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">원하시는 메뉴를 선택해 주세요.</p>
     </div>
-
     <div class="w-full max-w-sm space-y-4">
       <button type="button" onclick="switchView('work')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
         <div class="flex items-center space-x-3">
@@ -118,7 +75,6 @@
         </div>
         <i class="fa-solid fa-chevron-right text-indigo-200 group-hover:translate-x-1 transition"></i>
       </button>
-
       <button type="button" onclick="switchView('schedule')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
         <div class="flex items-center space-x-3">
           <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-calendar-days text-xl"></i></div>
@@ -137,25 +93,18 @@
     <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 pt-3 sm:pt-0">
       <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
         <div class="flex items-center space-x-2 sm:space-x-3">
-          <button type="button" onclick="goHome()" class="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white mr-1" title="홈으로">
-            <i class="fa-solid fa-house"></i>
-          </button>
+          <button type="button" onclick="goHome()" class="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white mr-1" title="홈으로"><i class="fa-solid fa-house"></i></button>
           <div>
             <h1 class="text-sm sm:text-xl font-bold tracking-tight">근무 및 연차 관리</h1>
             <p class="text-[10px] sm:text-xs text-indigo-200 hidden sm:block">구글 시트 실시간 연동</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <button type="button" id="exportCsvBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1 border border-indigo-400/30">
-            <i class="fa-solid fa-file-csv"></i><span class="hidden sm:inline">CSV</span>
-          </button>
-          <button type="button" id="openAddModalBtn" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition flex items-center space-x-1">
-            <i class="fa-solid fa-plus"></i><span>등록</span>
-          </button>
+          <button type="button" id="exportCsvBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1 border border-indigo-400/30"><i class="fa-solid fa-file-csv"></i><span class="hidden sm:inline">CSV</span></button>
+          <button type="button" id="openAddModalBtn" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition flex items-center space-x-1"><i class="fa-solid fa-plus"></i><span>등록</span></button>
         </div>
       </div>
     </header>
-
     <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4">
       <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row items-center justify-between gap-3">
         <div class="flex items-center space-x-2 w-full md:w-auto justify-between">
@@ -166,23 +115,17 @@
         </div>
         <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
           <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">근무자:</span>
-          <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5">
-            <option value="ALL">전체 보기</option>
-          </select>
+          <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5"><option value="ALL">전체 보기</option></select>
         </div>
       </section>
-
       <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-6 overflow-x-auto">
         <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-2 mb-2 min-w-[280px]">
           <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
         </div>
         <div id="calendarGrid" class="grid grid-cols-7 gap-1 min-w-[280px]"></div>
       </section>
-
       <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 space-y-3">
-        <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2">
-          <i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span>
-        </h3>
+        <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2"><i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span></h3>
         <div id="workerBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
       </section>
     </main>
@@ -191,14 +134,9 @@
   <!-- 3. 업무 일지 화면 -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
-      <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
-        <i class="fa-solid fa-house"></i><span>홈으로</span>
-      </button>
-      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5">
-        <i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)
-      </span>
+      <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition"><i class="fa-solid fa-house"></i><span>홈으로</span></button>
+      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)</span>
     </div>
-
     <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
       <div class="sched-sheet">
         <div class="sched-binding" aria-hidden="true"></div>
@@ -217,9 +155,9 @@
     </div>
   </div>
 
-  <!-- 업무 일지 상세 입력 및 설비별 작업 목록 팝업 모달 -->
+  <!-- 업무 일지 팝업 모달 -->
   <div id="schedModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-lg overflow-hidden">
       <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center justify-between">
         <div>
           <h3 id="modalDateTitle" class="text-base font-bold text-indigo-400">날짜</h3>
@@ -228,17 +166,13 @@
         <button type="button" id="closeSchedModalBtn" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-        <!-- 기존 등록된 설비별 작업 목록 -->
         <div>
           <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider"><i class="fa-solid fa-list-check mr-1 text-indigo-400"></i> 해당 날짜 작업 목록</h4>
           <div id="facilityTaskList" class="space-y-2 max-h-40 overflow-y-auto pr-1">
             <p class="text-xs text-slate-500 py-2 text-center">등록된 작업이 없습니다.</p>
           </div>
         </div>
-
         <hr class="border-slate-800">
-
-        <!-- 새로운 작업 추가 폼 -->
         <div class="space-y-3 bg-slate-800/50 p-4 rounded-xl border border-slate-800">
           <h4 class="text-xs font-bold text-indigo-300"><i class="fa-solid fa-plus mr-1"></i> 새 설비 작업 추가</h4>
           <div>
@@ -251,12 +185,9 @@
           </div>
           <div class="flex items-center justify-between pt-1">
             <span id="schedModalMsg" class="text-xs font-medium text-emerald-400"></span>
-            <button type="button" id="addSchedTaskBtn" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow transition ml-auto flex items-center space-x-1">
-              <i class="fa-solid fa-plus"></i><span>추가하기</span>
-            </button>
+            <button type="button" id="addSchedTaskBtn" class="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow transition ml-auto flex items-center space-x-1"><i class="fa-solid fa-plus"></i><span>추가하기</span></button>
           </div>
         </div>
-
         <div class="flex justify-end pt-2 border-t border-slate-800">
           <button type="button" id="cancelSchedModalBtn" class="px-5 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition">닫기</button>
         </div>
@@ -264,7 +195,7 @@
     </div>
   </div>
 
-  <!-- 근무 등록/수정 모달창 -->
+  <!-- 근무 등록/수정 모달 -->
   <div id="entryModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl shadow-xl border dark:border-slate-700 w-full max-w-md overflow-hidden">
       <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b dark:border-slate-700 flex items-center justify-between">
@@ -273,14 +204,8 @@
       </div>
       <form id="recordForm" class="p-6 space-y-4">
         <input type="hidden" id="recordId">
-        <div>
-          <label class="block text-xs font-bold mb-1">날짜 *</label>
-          <input type="date" id="inputDate" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
-        </div>
-        <div>
-          <label class="block text-xs font-bold mb-1">이름 *</label>
-          <input type="text" id="inputWorker" placeholder="예: 홍길동" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
-        </div>
+        <div><label class="block text-xs font-bold mb-1">날짜 *</label><input type="date" id="inputDate" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent"></div>
+        <div><label class="block text-xs font-bold mb-1">이름 *</label><input type="text" id="inputWorker" placeholder="예: 홍길동" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent"></div>
         <div>
           <label class="block text-xs font-bold mb-1">구분 *</label>
           <select id="inputCategory" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
@@ -292,14 +217,8 @@
             <option value="조퇴" class="dark:bg-slate-800">조퇴</option>
           </select>
         </div>
-        <div>
-          <label class="block text-xs font-bold mb-1">시간 *</label>
-          <input type="number" id="inputHours" step="0.5" min="0" max="24" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent">
-        </div>
-        <div>
-          <label class="block text-xs font-bold mb-1">사유 및 비고</label>
-          <textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm resize-none bg-transparent"></textarea>
-        </div>
+        <div><label class="block text-xs font-bold mb-1">시간 *</label><input type="number" id="inputHours" step="0.5" min="0" max="24" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent"></div>
+        <div><label class="block text-xs font-bold mb-1">사유 및 비고</label><textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm resize-none bg-transparent"></textarea></div>
         <div class="flex items-center justify-between pt-3 border-t dark:border-slate-700">
           <button type="button" id="deleteModalBtn" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/30 rounded-lg hidden">삭제</button>
           <div class="flex space-x-2 ml-auto">
@@ -311,7 +230,7 @@
     </div>
   </div>
 
-  <!-- 통합 제어 스크립트 -->
+  <!-- 통합 스크립트 -->
   <script>
     function switchView(type) {
       document.getElementById('homeView').classList.add('hidden');
@@ -332,7 +251,6 @@
       document.getElementById('scheduleView').classList.add('hidden');
     }
 
-    // --- 1. 근무 및 연차 로직 ---
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypVfJMF2TOIpVT9QOCEcno_TKSgQYJOsMJirvmV1VjDsih7whixYDug9fW-GfZ8_kkVg/exec';
     let records = [];
     let curY = new Date().getFullYear(), curM = new Date().getMonth() + 1;
@@ -365,13 +283,23 @@
       } catch (e) { console.error(e); }
     }
 
+    // [날짜 밀림 현상 방지] YYYY-MM-DD 문자열을 안전하게 분리하여 년, 월, 일 추출
+    function parseLocalDate(dateStr) {
+      if (!dateStr) return null;
+      var str = String(dateStr).split('T')[0]; // ISO 형식 대응
+      var parts = str.split('-');
+      if (parts.length >= 3) {
+        return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
+      }
+      return null;
+    }
+
     function renderWork() {
       const [y, m] = document.getElementById('monthPicker').value.split('-').map(Number);
       curY = y; curM = m;
       const monthly = records.filter(r => {
-        if (!r.date) return false;
-        const [rY, rM] = r.date.toString().split('-').map(Number);
-        return rY === y && rM === m;
+        var p = parseLocalDate(r.date);
+        return p && p.y === y && p.m === m;
       });
 
       const filterEl = document.getElementById('workerFilter');
@@ -430,9 +358,11 @@
       const last = new Date(y, m, 0).getDate();
       const byDay = {};
       monthly.forEach(r => {
-        const dNum = parseInt(r.date.toString().split('-')[2], 10);
-        if (!byDay[dNum]) byDay[dNum] = [];
-        byDay[dNum].push(r);
+        var p = parseLocalDate(r.date);
+        if (p) {
+          if (!byDay[p.d]) byDay[p.d] = [];
+          byDay[p.d].push(r);
+        }
       });
 
       for (let i = 0; i < first; i++) grid.appendChild(document.createElement('div'));
@@ -543,9 +473,9 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (다중 설비 행 단위 누적 관리) ---
+    // --- 2. 업무 일지 로직 ---
     let schedInitialized = false;
-    let scheduleList = []; // [ { id: 행번호, date: '...', facility: '...', memo: '...' } ]
+    let scheduleList = [];
     let selectedSchedDate = '';
 
     async function initScheduleApp() {
@@ -569,62 +499,14 @@
 
     async function saveScheduleRowToSheet(payload) {
       try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(payload)
-        });
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
       } catch (e) { console.error(e); }
     }
 
     function getHolidaysOfYear(year) {
       var hMap = {};
-      var fixed = {
-        '01-01': '신정',
-        '03-01': '삼일절',
-        '05-05': '어린이날',
-        '06-06': '현충일',
-        '08-15': '광복절',
-        '10-03': '개천절',
-        '10-09': '한글날',
-        '12-25': '성탄절'
-      };
-
-      for (var md in fixed) {
-        hMap[year + '-' + md] = fixed[md];
-      }
-
-      var lunarData = {
-        2024: { seol: ['2024-02-09', '2024-02-10', '2024-02-11'], seolAlt: '2024-02-12', buddha: '2024-05-15', chuseok: ['2024-09-16', '2024-09-17', '2024-09-18'] },
-        2025: { seol: ['2025-01-28', '2025-01-29', '2025-01-30'], seolAlt: null, buddha: '2025-05-05', chuseok: ['2025-10-05', '2025-10-06', '2025-10-07'], chuseokAlt: '2025-10-08' },
-        2026: { seol: ['2026-02-16', '2026-02-17', '2026-02-18'], seolAlt: null, buddha: '2026-05-24', buddhaAlt: '2026-05-25', chuseok: ['2026-09-24', '2026-09-25', '2026-09-26'] },
-        2027: { seol: ['2027-02-05', '2027-02-06', '2027-02-07'], seolAlt: '2027-02-08', buddha: '2027-05-13', chuseok: ['2027-09-14', '2027-09-15', '2027-09-16'] },
-        2028: { seol: ['2028-01-25', '2028-01-26', '2028-01-27'], seolAlt: null, buddha: '2028-05-02', chuseok: ['2028-10-02', '2028-10-03', '2028-10-04'] },
-        2029: { seol: ['2029-02-12', '2029-02-13', '2029-02-14'], seolAlt: null, buddha: '2029-05-20', buddhaAlt: '2029-05-21', chuseok: ['2029-09-21', '2029-09-22', '2029-09-23'], chuseokAlt: '2029-09-24' },
-        2030: { seol: ['2030-02-01', '2030-02-02', '2030-02-03'], seolAlt: '2030-02-04', buddha: '2030-05-09', chuseok: ['2030-09-11', '2030-09-12', '2030-09-13'] }
-      };
-
-      var curL = lunarData[year];
-      if (curL) {
-        if (curL.seol) curL.seol.forEach((d, idx) => { hMap[d] = idx === 0 ? '설날 전날' : idx === 1 ? '설날' : '설날 다음날'; });
-        if (curL.seolAlt) hMap[curL.seolAlt] = '대체공휴일';
-        if (curL.chuseok) curL.chuseok.forEach((d, idx) => { hMap[d] = idx === 0 ? '추석 전날' : idx === 1 ? '추석' : '추석 다음날'; });
-        if (curL.chuseokAlt) hMap[curL.chuseokAlt] = '대체공휴일';
-        if (curL.buddha) hMap[curL.buddha] = '부처님오신날';
-        if (curL.buddhaAlt) hMap[curL.buddhaAlt] = '대체공휴일';
-      }
-
-      Object.keys(hMap).forEach(dateStr => {
-        var dt = new Date(dateStr);
-        if (dt.getDay() === 0) {
-          var nextDay = new Date(dt);
-          nextDay.setDate(dt.getDate() + 1);
-          var nStr = nextDay.toISOString().split('T')[0];
-          if (!hMap[nStr]) hMap[nStr] = '대체공휴일';
-        }
-      });
-
+      var fixed = {'01-01': '신정', '03-01': '삼일절', '05-05': '어린이날', '06-06': '현충일', '08-15': '광복절', '10-03': '개천절', '10-09': '한글날', '12-25': '성탄절'};
+      for (var md in fixed) hMap[year + '-' + md] = fixed[md];
       return hMap;
     }
 
@@ -633,8 +515,7 @@
     var vy = dNow.getFullYear(), vm = dNow.getMonth();
 
     function renderSchedGrid(){
-      var yEl = document.getElementById('y');
-      var mEl = document.getElementById('m');
+      var yEl = document.getElementById('y'), mEl = document.getElementById('m');
       if (yEl) yEl.textContent = vy+'년';
       if (mEl) mEl.textContent = (vm+1)+'월';
 
@@ -645,14 +526,16 @@
       var first = new Date(vy, vm, 1).getDay();
       var days = new Date(vy, vm + 1, 0).getDate();
       var total = Math.ceil((first+days)/7)*7;
-
       var holidayMap = getHolidaysOfYear(vy);
       
-      // 날짜별 항목 매핑
       var dateMap = {};
       scheduleList.forEach(item => {
-        if (!dateMap[item.date]) dateMap[item.date] = [];
-        dateMap[item.date].push(item);
+        var p = parseLocalDate(item.date);
+        if (p) {
+          var k = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+          if (!dateMap[k]) dateMap[k] = [];
+          dateMap[k].push(item);
+        }
       });
 
       for(var i=0; i<total; i++){
@@ -664,20 +547,13 @@
         var displayTxt = dayItems.map(item => `[${item.facility}] ${item.memo}`).join(', ');
 
         var holName = holidayMap[k] || '';
-        var isSun = (i % 7 === 0);
-        var isHol = (isSun || holName !== '');
+        var isHol = ((i % 7 === 0) || holName !== '');
 
         var b = document.createElement('button');
         b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
-        
-        b.onclick = (function(dateKey) {
-          return function() {
-            openSchedModal(dateKey, holidayMap, dateMap);
-          };
-        })(k);
-
+        b.onclick = (function(dateKey) { return function() { openSchedModal(dateKey, holidayMap, dateMap); }; })(k);
         grid.appendChild(b);
       }
       renderSchedList(days, holidayMap, dateMap);
@@ -690,7 +566,7 @@
       var fh = document.getElementById('fh');
       if (fh) fh.textContent = (vm+1)+'월 주요 업무 및 일정';
       
-      var any=false;
+      var any = false;
       for(var d=1; d<=days; d++){
         var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
         var holName = holidayMap[k] || '';
@@ -698,14 +574,10 @@
         var displayTxt = dayItems.map(item => `[${item.facility}] ${item.memo}`).join(' / ');
 
         if(dayItems.length > 0 || holName){
-          any=true;
+          any = true;
           var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${displayTxt}</span>`;
-          li.onclick = (function(dateKey) {
-            return function() {
-              openSchedModal(dateKey, holidayMap, dateMap);
-            };
-          })(k);
+          li.onclick = (function(dateKey) { return function() { openSchedModal(dateKey, holidayMap, dateMap); }; })(k);
           L.appendChild(li);
         }
       }
@@ -722,12 +594,16 @@
       document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
       document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
 
-      // 입력 필드 초기화
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
       document.getElementById('schedModalMsg').textContent = '';
 
-      renderModalTaskList(dateMap ? dateMap[dateKey] || [] : scheduleList.filter(i => i.date === dateKey));
+      var tasks = (dateMap && dateMap[dateKey]) ? dateMap[dateKey] : scheduleList.filter(i => {
+        var sp = parseLocalDate(i.date);
+        return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === dateKey;
+      });
+
+      renderModalTaskList(tasks);
       document.getElementById('schedModal').classList.remove('hidden');
     }
 
@@ -762,8 +638,16 @@
       await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id });
       await fetchScheduleFromSheet();
       
-      var tasks = scheduleList.filter(i => i.date === selectedSchedDate);
-      renderModalTaskList(tasks);
+      var dateMap = {};
+      scheduleList.forEach(item => {
+        var p = parseLocalDate(item.date);
+        if (p) {
+          var k = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+          if (!dateMap[k]) dateMap[k] = [];
+          dateMap[k].push(item);
+        }
+      });
+      renderModalTaskList(dateMap[selectedSchedDate] || []);
       document.getElementById('schedModalMsg').textContent = '삭제 완료!';
     }
 
@@ -779,8 +663,7 @@
       if (nextBtn) nextBtn.onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); };
       if (todayBtn) todayBtn.onclick = () => { 
         var a = todayKey.split('-'); 
-        vy = +a[0]; 
-        vm = +a[1]-1; 
+        vy = +a[0]; vm = +a[1]-1; 
         renderSchedGrid(); 
       };
 
@@ -799,7 +682,6 @@
 
         document.getElementById('schedModalMsg').textContent = '추가 중...';
         
-        // 1. 구글 시트로 데이터 동기 전송
         await saveScheduleRowToSheet({ 
           action: 'schedule', 
           subAction: 'insert', 
@@ -808,17 +690,22 @@
           memo: tsk 
         });
 
-        // 2. 입력란 초기화
         document.getElementById('inputFacility').value = '';
         document.getElementById('inputTaskMemo').value = '';
         
-        // 3. 구글 시트에서 최신 데이터 완전히 불러올 때까지 대기(await)
         await fetchScheduleFromSheet();
         
-        // 4. 해당 날짜 데이터만 필터링하여 상부 목록 즉시 갱신
-        var currentTasks = scheduleList.filter(item => item.date === selectedSchedDate);
-        renderModalTaskList(currentTasks);
+        var dateMap = {};
+        scheduleList.forEach(item => {
+          var p = parseLocalDate(item.date);
+          if (p) {
+            var k = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+            if (!dateMap[k]) dateMap[k] = [];
+            dateMap[k].push(item);
+          }
+        });
         
+        renderModalTaskList(dateMap[selectedSchedDate] || []);
         document.getElementById('schedModalMsg').textContent = '추가 완료!';
       };
     }
