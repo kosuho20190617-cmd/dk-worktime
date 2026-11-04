@@ -10,12 +10,10 @@
   <style>
     :root {
       --desk: #f8fafc; --paper: #ffffff; --ink: #25282d; --muted: #80838a; --line: #e3e0d6;
-      --sun: #c2392b; --sat: #3a6ea5; --band: #27418f; --band-ink: #fff; --sel: #fff3c4; --hole: #d8dbd4; --ren: #fdeeea;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --desk: #121417; --paper: #1e2229; --ink: #ecebe5; --muted: #9a9da3; --line: #2e333d;
-        --sun: #ef7b6e; --sat: #7fb0e6; --band: #3a55b0; --band-ink: #fff; --sel: #3a331c; --hole: #121417; --ren: #352a29;
       }
     }
     html, body { background-color: var(--desk); color: var(--ink); font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; }
@@ -155,9 +153,9 @@
     </div>
   </div>
 
-  <!-- 업무 일지 팝업 모달 -->
-  <div id="schedModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 overflow-y-auto">
-    <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-lg my-auto overflow-hidden flex flex-col max-h-[85vh]">
+  <!-- 업무 일지 팝업 모달 (안정적인 중앙 정렬 및 가시성 확보) -->
+  <div id="schedModal" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
       <div class="bg-slate-800 px-5 py-3.5 border-b border-slate-700 flex items-center justify-between shrink-0">
         <div>
           <h3 id="modalDateTitle" class="text-base font-bold text-indigo-400">날짜</h3>
@@ -165,15 +163,15 @@
         </div>
         <button type="button" id="closeSchedModalBtn" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+      <div class="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
         <div>
           <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider"><i class="fa-solid fa-list-check mr-1 text-indigo-400"></i> 해당 날짜 작업 목록</h4>
-          <div id="facilityTaskList" class="space-y-2 max-h-36 overflow-y-auto pr-1">
+          <div id="facilityTaskList" class="space-y-2 max-h-32 overflow-y-auto pr-1">
             <p class="text-xs text-slate-500 py-2 text-center">등록된 작업이 없습니다.</p>
           </div>
         </div>
         <hr class="border-slate-800">
-        <div class="space-y-3 bg-slate-800/50 p-3.5 rounded-xl border border-slate-800">
+        <div class="space-y-2.5 bg-slate-800/50 p-3.5 rounded-xl border border-slate-800">
           <h4 class="text-xs font-bold text-indigo-300"><i class="fa-solid fa-plus mr-1"></i> 새 설비 작업 추가</h4>
           <div>
             <label class="block text-[11px] font-bold text-slate-300 mb-1">설비명 *</label>
@@ -189,8 +187,8 @@
           </div>
         </div>
       </div>
-      <div class="bg-slate-800/80 px-5 py-3 border-t border-slate-700/80 flex justify-end shrink-0">
-        <button type="button" id="cancelSchedModalBtn" class="px-5 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition">닫기</button>
+      <div class="bg-slate-800 px-5 py-3 border-t border-slate-700 flex justify-end shrink-0">
+        <button type="button" id="cancelSchedModalBtn" class="px-5 py-2 text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition">닫기</button>
       </div>
     </div>
   </div>
