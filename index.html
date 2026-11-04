@@ -28,17 +28,17 @@
       font-family: 'Noto Sans KR', sans-serif;
       margin: 0;
       padding: 0;
-      padding-top: env(safe-area-inset-top, 0px);
     }
 
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* 업무 일지 전용 어두운 테마 스타일 */
+    /* 업무 일지 전용 다크 테마 스타일 (상단 상태바 대비 최적화) */
     .schedule-dark-theme {
       background-color: #0b0f19 !important;
       color: #f1f5f9 !important;
       min-height: 100vh;
+      padding-top: max(env(safe-area-inset-top, 0px), 20px);
     }
     .schedule-dark-theme .sched-sheet {
       background: #111827 !important;
@@ -194,7 +194,7 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (다크 테마 재구성) -->
+  <!-- 3. 업무 일지 화면 (상단바 여백 및 가시성 최적화) -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
@@ -205,7 +205,7 @@
       </span>
     </div>
 
-    <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto">
+    <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
       <div class="sched-sheet">
         <div class="sched-binding" aria-hidden="true"></div>
         <div class="sched-head">
