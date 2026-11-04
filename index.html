@@ -153,7 +153,7 @@
     </div>
   </div>
 
-  <!-- 업무 일지 팝업 모달 (Flex 정렬 완전 복구) -->
+  <!-- 업무 일지 팝업 모달 -->
   <div id="schedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 99999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box;">
     <div style="background: #111827; color: #f1f5f9; width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid #374151; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); overflow: hidden;">
       
@@ -294,9 +294,10 @@
       } catch (e) { console.error(e); }
     }
 
+    // [수정됨] 타임존 오차 없이 날짜 문자열(YYYY-MM-DD)을 정확하게 파싱하는 함수
     function parseLocalDate(dateStr) {
       if (!dateStr) return null;
-      var str = String(dateStr).split('T')[0];
+      var str = String(dateStr).trim().split('T')[0];
       var parts = str.split('-');
       if (parts.length >= 3) {
         return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
@@ -563,7 +564,14 @@
         b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
-        b.onclick = (function(dateKey) { return function() { openSchedModal(dateKey, holidayMap, dateMap); }; })(k);
+        
+        // [수정됨] 달력 날짜 클릭 시 전역 변수나 인자 꼬임 없이 안전하게 모달을 열도록 수정
+        b.onclick = (function(dateKey) {
+          return function() {
+            openSchedModal(dateKey);
+          };
+        })(k);
+        
         grid.appendChild(b);
       }
       renderSchedList(days, holidayMap, dateMap);
@@ -587,19 +595,27 @@
           any = true;
           var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${displayTxt}</span>`;
-          li.onclick = (function(dateKey) { return function() { openSchedModal(dateKey, holidayMap, dateMap); }; })(k);
+          
+          li.onclick = (function(dateKey) {
+            return function() {
+              openSchedModal(dateKey);
+            };
+          })(k);
+          
           L.appendChild(li);
         }
       }
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
-    function openSchedModal(dateKey, holidayMap, dateMap) {
+    // [수정됨] 모달 열기 함수 단순화 및 안정화
+    function openSchedModal(dateKey) {
       selectedSchedDate = dateKey;
       var p = dateKey.split('-');
       var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
       var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-      var holName = holidayMap ? holidayMap[dateKey] : '';
+      var holidayMap = getHolidaysOfYear(+p[0]);
+      var holName = holidayMap[dateKey] || '';
 
       document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
       document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
@@ -608,7 +624,7 @@
       document.getElementById('inputTaskMemo').value = '';
       document.getElementById('schedModalMsg').textContent = '';
 
-      var tasks = (dateMap && dateMap[dateKey]) ? dateMap[dateKey] : scheduleList.filter(i => {
+      var tasks = scheduleList.filter(i => {
         var sp = parseLocalDate(i.date);
         return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === dateKey;
       });
@@ -648,16 +664,11 @@
       await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id });
       await fetchScheduleFromSheet();
       
-      var dateMap = {};
-      scheduleList.forEach(item => {
-        var p = parseLocalDate(item.date);
-        if (p) {
-          var k = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
-          if (!dateMap[k]) dateMap[k] = [];
-          dateMap[k].push(item);
-        }
+      var tasks = scheduleList.filter(i => {
+        var sp = parseLocalDate(i.date);
+        return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === selectedSchedDate;
       });
-      renderModalTaskList(dateMap[selectedSchedDate] || []);
+      renderModalTaskList(tasks);
       document.getElementById('schedModalMsg').textContent = '삭제 완료!';
     }
 
@@ -705,17 +716,12 @@
         
         await fetchScheduleFromSheet();
         
-        var dateMap = {};
-        scheduleList.forEach(item => {
-          var p = parseLocalDate(item.date);
-          if (p) {
-            var k = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
-            if (!dateMap[k]) dateMap[k] = [];
-            dateMap[k].push(item);
-          }
+        var tasks = scheduleList.filter(i => {
+          var sp = parseLocalDate(i.date);
+          return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === selectedSchedDate;
         });
         
-        renderModalTaskList(dateMap[selectedSchedDate] || []);
+        renderModalTaskList(tasks);
         document.getElementById('schedModalMsg').textContent = '추가 완료!';
       };
     }
