@@ -188,7 +188,7 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (구글 시트 연동 로직 포함) -->
+  <!-- 3. 업무 일지 화면 -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
@@ -526,9 +526,9 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (구글 시트 연동 및 팝업 모달) ---
+    // --- 2. 업무 일지 로직 (구글 시트 연동 및 설비명/작업내용 분리) ---
     let schedInitialized = false;
-    let scheduleNotes = {};
+    let scheduleNotes = {}; // { 'YYYY-MM-DD': { facility: '...', memo: '...' } }
     let selectedSchedDate = '';
 
     async function initScheduleApp() {
@@ -547,23 +547,26 @@
         if (Array.isArray(data)) {
           data.forEach(item => {
             if (item.date) {
-              scheduleNotes[item.date] = item.memo || '';
+              scheduleNotes[item.date] = {
+                facility: item.facility || '',
+                memo: item.memo || ''
+              };
             }
           });
         }
       } catch (e) {
-        scheduleNotes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1') || '{}');
+        scheduleNotes = JSON.parse(localStorage.getItem('paper-calendar-notes-v2') || '{}');
       }
       renderSchedGrid();
     }
 
-    async function saveScheduleToSheet(dateKey, memoText) {
+    async function saveScheduleToSheet(dateKey, facilityText, memoText) {
       try {
         await fetch(SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'schedule', date: dateKey, memo: memoText })
+          body: JSON.stringify({ action: 'schedule', date: dateKey, facility: facilityText, memo: memoText })
         });
       } catch (e) { console.error(e); }
     }
@@ -643,15 +646,19 @@
         if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
         
         var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-        var txt = scheduleNotes[k]||'';
+        var item = scheduleNotes[k] || {};
+        var fac = item.facility || '';
+        var tsk = item.memo || '';
+        var displayTxt = fac ? `[${fac}] ${tsk}` : tsk;
+
         var holName = holidayMap[k] || '';
         var isSun = (i % 7 === 0);
         var isHol = (isSun || holName !== '');
 
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${txt?'has':''}`;
-        b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
+        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${displayTxt?'has':''}`;
+        b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
         b.onclick = (function(dateKey) {
           return function() {
@@ -669,16 +676,21 @@
       if (!L) return;
       L.innerHTML = '';
       var fh = document.getElementById('fh');
-      if (fh) fh.textContent = (vm+1)+'월 주요 일정 및 메모';
+      if (fh) fh.textContent = (vm+1)+'월 주요 업무 및 일정';
       
       var any=false;
       for(var d=1; d<=days; d++){
         var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
         var holName = holidayMap[k] || '';
-        if(scheduleNotes[k] || holName){
+        var item = scheduleNotes[k] || {};
+        var fac = item.facility || '';
+        var tsk = item.memo || '';
+        var displayTxt = fac ? `[${fac}] ${tsk}` : tsk;
+
+        if(displayTxt || holName){
           any=true;
           var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
-          li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${scheduleNotes[k]||''}</span>`;
+          li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${displayTxt}</span>`;
           li.onclick = (function(dateKey) {
             return function() {
               openSchedModal(dateKey, holidayMap);
@@ -687,7 +699,7 @@
           L.appendChild(li);
         }
       }
-      if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
+      if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
     function openSchedModal(dateKey, holidayMap) {
@@ -700,24 +712,9 @@
       document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
       document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
 
-      var existing = scheduleNotes[dateKey] || '';
-      var facility = '';
-      var taskMemo = '';
-
-      if (existing.startsWith('[')) {
-        var match = existing.match(/^\[(.*?)\]\s*(.*)$/);
-        if (match) {
-          facility = match[1];
-          taskMemo = match[2];
-        } else {
-          taskMemo = existing;
-        }
-      } else {
-        taskMemo = existing;
-      }
-
-      document.getElementById('inputFacility').value = facility;
-      document.getElementById('inputTaskMemo').value = taskMemo;
+      var item = scheduleNotes[dateKey] || {};
+      document.getElementById('inputFacility').value = item.facility || '';
+      document.getElementById('inputTaskMemo').value = item.memo || '';
       document.getElementById('schedModalMsg').textContent = '';
       document.getElementById('schedModal').classList.remove('hidden');
     }
@@ -747,26 +744,21 @@
         var fac = document.getElementById('inputFacility').value.trim();
         var tsk = document.getElementById('inputTaskMemo').value.trim();
         
-        var combined = '';
         if (fac || tsk) {
-          combined = `[${fac}] ${tsk}`;
-        }
-
-        if (combined) {
-          scheduleNotes[selectedSchedDate] = combined;
+          scheduleNotes[selectedSchedDate] = { facility: fac, memo: tsk };
         } else {
           delete scheduleNotes[selectedSchedDate];
         }
 
-        localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(scheduleNotes));
+        localStorage.setItem('paper-calendar-notes-v2', JSON.stringify(scheduleNotes));
         document.getElementById('schedModalMsg').textContent = '저장 중...';
         
-        await saveScheduleToSheet(selectedSchedDate, combined);
+        await saveScheduleToSheet(selectedSchedDate, fac, tsk);
         
         document.getElementById('schedModalMsg').textContent = '저장 완료!';
         setTimeout(async () => {
           closeModal();
-          await fetchScheduleFromSheet(); // 시트 최신 데이터 다시 동기화
+          await fetchScheduleFromSheet(); // 구글 시트 최신 데이터 즉시 동기화
         }, 500);
       };
     }
