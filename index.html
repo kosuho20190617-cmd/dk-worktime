@@ -153,7 +153,7 @@
     </div>
   </div>
 
-  <!-- 업무 일지 팝업 모달 (업무 추가 및 목록 창) -->
+  <!-- 업무 일지 팝업 모달 (확실하게 뜨도록 display 제어 정비) -->
   <div id="schedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 99999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box;">
     <div style="background: #111827; color: #f1f5f9; width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid #374151; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); overflow: hidden;">
       
@@ -570,13 +570,13 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        // 버튼(button) 태그를 사용하여 모바일/데스크톱 터치/클릭 이벤트 누락 원천 차단
+        // 확실하게 동작하는 button 요소로 생성하여 클릭 이벤트 보장
         var b = document.createElement('button');
         b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
-        // 클릭 시 확실하게 모달 호출
+        // 클릭 시 곧바로 openSchedModal 실행
         b.onclick = (function(dateKey) {
           return function(e) {
             e.preventDefault();
@@ -644,6 +644,7 @@
       });
 
       renderModalTaskList(tasks);
+      // 확실하게 모달을 화면에 띄우도록 display: flex 강제 적용
       document.getElementById('schedModal').style.display = 'flex';
     }
 
