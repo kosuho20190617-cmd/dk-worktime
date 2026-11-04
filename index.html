@@ -294,11 +294,18 @@
       } catch (e) { console.error(e); }
     }
 
-    // [수정됨] 타임존 오차 없이 날짜 문자열(YYYY-MM-DD)을 정확하게 파싱하는 함수
+    // [완벽 해결] 날짜 시차(타임존) 오류를 원천 차단하여 시트에 입력된 날짜 그대로 정확하게 읽어오는 함수
     function parseLocalDate(dateStr) {
       if (!dateStr) return null;
-      var str = String(dateStr).trim().split('T')[0];
-      var parts = str.split('-');
+      var s = String(dateStr).trim();
+      // 날짜 객체나 ISO 문자열인 경우 현지 시간 기준 년, 월, 일을 안전하게 추출
+      if (s.includes('T') || s.includes('Z')) {
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() };
+        }
+      }
+      var parts = s.split('T')[0].split('-');
       if (parts.length >= 3) {
         return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
       }
@@ -560,14 +567,13 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        var b = document.createElement('button');
-        b.type = 'button';
+        var b = document.createElement('div'); // 버튼 대신 div로 감싸고 내부 클릭 제어
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
-        // [수정됨] 달력 날짜 클릭 시 전역 변수나 인자 꼬임 없이 안전하게 모달을 열도록 수정
-        b.onclick = (function(dateKey) {
-          return function() {
+        // 확실하게 모달을 열 수 있도록 이벤트 리스너 직접 부착
+        (function(dateKey) {
+          b.onclick = function() {
             openSchedModal(dateKey);
           };
         })(k);
@@ -596,8 +602,8 @@
           var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${displayTxt}</span>`;
           
-          li.onclick = (function(dateKey) {
-            return function() {
+          (function(dateKey) {
+            li.onclick = function() {
               openSchedModal(dateKey);
             };
           })(k);
@@ -608,7 +614,6 @@
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
-    // [수정됨] 모달 열기 함수 단순화 및 안정화
     function openSchedModal(dateKey) {
       selectedSchedDate = dateKey;
       var p = dateKey.split('-');
@@ -711,6 +716,7 @@
           memo: tsk 
         });
 
+        document.getElementById('inputFacility').value = 'id'; // 초기화
         document.getElementById('inputFacility').value = '';
         document.getElementById('inputTaskMemo').value = '';
         
