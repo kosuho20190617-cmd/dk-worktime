@@ -188,7 +188,7 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (팝업 방식 및 설비명/작업내용 분리) -->
+  <!-- 3. 업무 일지 화면 (구글 시트 연동 로직 포함) -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
@@ -526,7 +526,7 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (팝업 모달 및 설비명/작업내용 분리 저장) ---
+    // --- 2. 업무 일지 로직 (구글 시트 연동 및 팝업 모달) ---
     let schedInitialized = false;
     let scheduleNotes = {};
     let selectedSchedDate = '';
@@ -546,8 +546,8 @@
         scheduleNotes = {};
         if (Array.isArray(data)) {
           data.forEach(item => {
-            if (item.date && item.memo) {
-              scheduleNotes[item.date] = item.memo;
+            if (item.date) {
+              scheduleNotes[item.date] = item.memo || '';
             }
           });
         }
@@ -653,7 +653,6 @@
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${txt?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
         
-        // 날짜 터치 시 팝업 열기
         b.onclick = (function(dateKey) {
           return function() {
             openSchedModal(dateKey, holidayMap);
@@ -701,7 +700,6 @@
       document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
       document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
 
-      // 기존 저장된 내용이 있다면 [설비명] / [작업 내용] 파싱
       var existing = scheduleNotes[dateKey] || '';
       var facility = '';
       var taskMemo = '';
@@ -760,16 +758,15 @@
           delete scheduleNotes[selectedSchedDate];
         }
 
-        // 로컬 백업 및 구글 시트 전송
         localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(scheduleNotes));
         document.getElementById('schedModalMsg').textContent = '저장 중...';
         
         await saveScheduleToSheet(selectedSchedDate, combined);
         
         document.getElementById('schedModalMsg').textContent = '저장 완료!';
-        setTimeout(() => {
+        setTimeout(async () => {
           closeModal();
-          renderSchedGrid();
+          await fetchScheduleFromSheet(); // 시트 최신 데이터 다시 동기화
         }, 500);
       };
     }
