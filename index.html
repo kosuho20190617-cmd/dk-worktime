@@ -305,7 +305,7 @@
       } else {
         document.getElementById('workView').classList.add('hidden');
         document.getElementById('scheduleView').classList.remove('hidden');
-        initScheduleApp();
+        initScheduleApp(); // 👈 업무일지 화면 진입 시 구글 시트 데이터 자동 로드
       }
     }
 
@@ -528,7 +528,7 @@
 
     // --- 2. 업무 일지 로직 (구글 시트 연동 및 설비명/작업내용 분리) ---
     let schedInitialized = false;
-    let scheduleNotes = {}; // { 'YYYY-MM-DD': { facility: '...', memo: '...' } }
+    let scheduleNotes = {}; 
     let selectedSchedDate = '';
 
     async function initScheduleApp() {
@@ -758,7 +758,7 @@
         document.getElementById('schedModalMsg').textContent = '저장 완료!';
         setTimeout(async () => {
           closeModal();
-          await fetchScheduleFromSheet(); // 구글 시트 최신 데이터 즉시 동기화
+          await fetchScheduleFromSheet(); 
         }, 500);
       };
     }
