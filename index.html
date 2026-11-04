@@ -295,7 +295,6 @@
       } catch (e) { console.error(e); }
     }
 
-    // 타임존 오차 방지 날짜 파서
     function parseLocalDate(dateStr) {
       if (!dateStr) return null;
       var s = String(dateStr).trim();
@@ -571,11 +570,13 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
+        // 버튼(button) 태그로 생성하여 클릭/터치 이벤트 보장
         var b = document.createElement('button');
         b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
+        // 확실하게 팝업창을 여는 이벤트 연결
         b.onclick = (function(dateKey) {
           return function(e) {
             e.preventDefault();
@@ -607,7 +608,6 @@
           li.type = 'button'; 
           li.className = `sched-li ${holName?'h':''}`;
           
-          // 공휴일 이름 및 설비별 작업 내역 구성 (각각 다음 줄로 떨어지도록 div로 분리)
           var nmHtml = '';
           if (holName) {
             nmHtml += `<div style="color: #f87171; font-weight: 600;">[${holName}]</div>`;
