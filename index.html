@@ -143,7 +143,7 @@
           <div class="sched-ym"><small id="y"></small><b id="m"></b></div>
           <div class="sched-nav">
             <!-- [추가] 버튼 - onclick 직접 연결로 클릭 신뢰성 100% 확보 -->
-            <button type="button" id="openNewSchedModalBtn" onclick="openNewSchedModal()" style="background: #4f46e5; border-color: #6366f1; font-weight: bold;"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
+            <button type="button" id="openNewSchedModalBtn" style="background: #4f46e5; border-color: #6366f1; font-weight: bold;"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
             <button type="button" id="prev" aria-label="이전 달">◀</button>
             <button type="button" id="today">오늘</button>
             <button type="button" id="next" aria-label="다음 달">▶</button>
@@ -166,7 +166,7 @@
           <h3 id="modalDateTitle" style="margin: 0; font-size: 15px; font-weight: bold; color: #818cf8;">업무 일지 등록</h3>
           <p id="modalLunar" style="margin: 2px 0 0 0; font-size: 11px; color: #9ca3af;">날짜, 설비, 작업 내용 입력</p>
         </div>
-        <button type="button" onclick="closeSchedModal()" style="background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 4px;"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" data-sched-close="1" style="background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 4px;"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <!-- 내부 콘텐츠 (스크롤 가능) -->
@@ -189,7 +189,7 @@
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
-            <button type="button" id="addSchedTaskBtn" onclick="submitSchedTask()" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
+            <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
           </div>
         </div>
 
@@ -205,7 +205,7 @@
 
       <!-- 하단 닫기 버튼 -->
       <div style="background: #1f2937; padding: 12px 16px; border-top: 1px solid #374151; display: flex; justify-content: flex-end; flex-shrink: 0;">
-        <button type="button" onclick="closeSchedModal()" style="padding: 8px 16px; background: #374151; color: #d1d5db; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;">닫기</button>
+        <button type="button" data-sched-close="1" style="padding: 8px 16px; background: #374151; color: #d1d5db; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;">닫기</button>
       </div>
 
     </div>
@@ -259,6 +259,11 @@
         document.getElementById('scheduleView').classList.remove('hidden');
         initScheduleApp();
       }
+    }
+
+    function localToday() {
+      var n = new Date();
+      return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
     }
 
     function goHome() {
@@ -423,7 +428,7 @@
       document.getElementById('nextMonthBtn').onclick = () => { curM++; if(curM>12){curM=1;curY++;} setMonthPickerValue(curY,curM); renderWork(); };
       document.getElementById('todayBtn').onclick = () => { const now=new Date(); curY=now.getFullYear(); curM=now.getMonth()+1; setMonthPickerValue(curY,curM); renderWork(); };
       
-      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = new Date().toISOString().split('T')[0]; document.getElementById('inputHours').value='2.5'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
+      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = localToday(); document.getElementById('inputHours').value='2.5'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
       document.getElementById('closeModalBtn').onclick = document.getElementById('cancelModalBtn').onclick = () => document.getElementById('entryModal').classList.add('hidden');
       
       document.getElementById('inputCategory').onchange = (e) => {
@@ -509,10 +514,10 @@
     async function fetchScheduleFromSheet() {
       try {
         const res = await fetch(SCRIPT_URL + '?type=schedule&t=' + Date.now());
-        scheduleList = await res.json();
-        if (!Array.isArray(scheduleList)) scheduleList = [];
+        var data = await res.json();
+        if (Array.isArray(data)) scheduleList = data.filter(function(it){ return it && it.facility !== undefined; });
       } catch (e) {
-        scheduleList = [];
+        console.error(e);
       }
       renderSchedGrid();
     }
@@ -615,61 +620,66 @@
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
-    // [전역 함수] 업무일지 등록 모달 열기
-    window.openNewSchedModal = function() {
+    // 업무일지 등록 모달 열기
+    function openNewSchedModal() {
       var modal = document.getElementById('schedModal');
       if (!modal) return;
 
-      var todayStr = new Date().toISOString().split('T')[0];
-      var pYearMonth = `${vy}-${String(vm + 1).padStart(2, '0')}`;
-      
-      if (!todayStr.startsWith(pYearMonth)) {
-        todayStr = `${pYearMonth}-01`;
-      }
+      var todayStr = localToday();
+      var pYearMonth = vy + '-' + String(vm + 1).padStart(2, '0');
+      if (todayStr.indexOf(pYearMonth) !== 0) todayStr = pYearMonth + '-01';
 
       document.getElementById('inputSchedDate').value = todayStr;
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
       document.getElementById('schedModalMsg').textContent = '';
 
-      renderModalTaskList();
-      modal.style.display = 'flex';
-    };
+      modal.style.display = 'flex';          // 먼저 열고
+      try { renderModalTaskList(); } catch (e) { console.error(e); }  // 목록 오류가 나도 모달은 열림
+    }
 
-    // [전역 함수] 업무일지 등록 모달 닫기
-    window.closeSchedModal = function() {
+    function closeSchedModal() {
       var modal = document.getElementById('schedModal');
       if (modal) modal.style.display = 'none';
-    };
+    }
 
-    // [전역 함수] 작업 저장하기
-    window.submitSchedTask = async function() {
+    var schedSaving = false;
+    async function submitSchedTask() {
+      if (schedSaving) return;
       var dateVal = document.getElementById('inputSchedDate').value;
       var fac = document.getElementById('inputFacility').value.trim();
       var tsk = document.getElementById('inputTaskMemo').value.trim();
-      
+      var msg = document.getElementById('schedModalMsg');
+      var btn = document.getElementById('addSchedTaskBtn');
+
       if (!dateVal || !fac || !tsk) {
         alert('날짜, 설비명, 작업 내용을 모두 입력해 주세요.');
         return;
       }
 
-      document.getElementById('schedModalMsg').textContent = '저장 중...';
-      
-      await saveScheduleRowToSheet({ 
-        action: 'schedule', 
-        subAction: 'insert', 
-        date: dateVal, 
-        facility: fac, 
-        memo: tsk 
-      });
+      schedSaving = true;
+      if (btn) btn.disabled = true;
+      msg.style.color = '#fbbf24';
+      msg.textContent = '저장 중...';
+
+      // 화면에 먼저 표시 (시트 반영 전 임시 항목)
+      scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk });
+      renderSchedGrid();
+      try { renderModalTaskList(); } catch (e) {}
+
+      await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk });
 
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
-      
-      await fetchScheduleFromSheet();
-      renderModalTaskList();
-      document.getElementById('schedModalMsg').textContent = '저장 완료!';
-    };
+
+      await fetchScheduleFromSheet();   // 시트 기준으로 다시 동기화
+      try { renderModalTaskList(); } catch (e) {}
+
+      msg.style.color = '#34d399';
+      msg.textContent = '저장 완료!';
+      schedSaving = false;
+      if (btn) btn.disabled = false;
+    }
 
     function renderModalTaskList() {
       var container = document.getElementById('facilityTaskList');
@@ -703,13 +713,28 @@
 
     async function deleteSchedTask(id) {
       if (!confirm('해당 설비 작업을 삭제하시겠습니까?')) return;
-      document.getElementById('schedModalMsg').textContent = '삭제 중...';
-      
-      await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id });
+      var item = scheduleList.find(function(t){ return String(t.id) === String(id); });
+      var msg = document.getElementById('schedModalMsg');
+      msg.style.color = '#fbbf24';
+      msg.textContent = '삭제 중...';
+
+      if (item && String(id).indexOf('tmp-') !== 0) {
+        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id, date: item.date, facility: item.facility, memo: item.memo });
+      }
       await fetchScheduleFromSheet();
-      renderModalTaskList();
-      document.getElementById('schedModalMsg').textContent = '삭제 완료!';
+      try { renderModalTaskList(); } catch (e) {}
+      msg.style.color = '#34d399';
+      msg.textContent = '삭제 완료!';
     }
+
+    // 업무일지 버튼 클릭 처리 (document 위임: 화면이 다시 그려져도 항상 동작)
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest('#openNewSchedModalBtn')) { e.preventDefault(); openNewSchedModal(); return; }
+      if (t.closest('[data-sched-close]')) { e.preventDefault(); closeSchedModal(); return; }
+      if (t.closest('#addSchedTaskBtn')) { e.preventDefault(); submitSchedTask(); return; }
+    });
 
     function setupScheduleEventListeners() {
       var prevBtn = document.getElementById('prev');
