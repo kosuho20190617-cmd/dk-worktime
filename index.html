@@ -25,8 +25,8 @@
     .schedule-dark-theme .sched-head { background: linear-gradient(135deg, #1e1b4b, #311042); color: #ffffff; display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #2d3748; }
     .schedule-dark-theme .sched-ym small { display: block; font-size: 11px; opacity: .7; letter-spacing: .08em; color: #a5b4fc; }
     .schedule-dark-theme .sched-ym b { font: 800 clamp(24px, 6vw, 38px)/1.05 'Nanum Myeongjo', Batang, serif; color: #ffffff; }
-    .schedule-dark-theme .sched-nav { display: flex; gap: 6px; }
-    .schedule-dark-theme .sched-nav button { font: inherit; font-size: 13px; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; min-width: 34px; height: 34px; padding: 0 10px; cursor: pointer; transition: background 0.2s; }
+    .schedule-dark-theme .sched-nav { display: flex; gap: 6px; align-items: center; }
+    .schedule-dark-theme .sched-nav button { font: inherit; font-size: 13px; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; min-width: 34px; height: 34px; padding: 0 10px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
     .schedule-dark-theme .sched-nav button:hover { background: rgba(255,255,255,.2); }
     .schedule-dark-theme .sched-dow, .schedule-dark-theme .sched-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
     .schedule-dark-theme .sched-dow div { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-bottom: 1px solid #1f2937; color: #9ca3af; }
@@ -142,6 +142,8 @@
         <div class="sched-head">
           <div class="sched-ym"><small id="y"></small><b id="m"></b></div>
           <div class="sched-nav">
+            <!-- [추가] 버튼 배치 -->
+            <button type="button" id="openNewSchedModalBtn" style="background: #4f46e5; border-color: #6366f1; font-weight: bold;"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
             <button type="button" id="prev" aria-label="이전 달">◀</button>
             <button type="button" id="today">오늘</button>
             <button type="button" id="next" aria-label="다음 달">▶</button>
@@ -154,15 +156,15 @@
     </div>
   </div>
 
-  <!-- 업무 일지 팝업 모달 -->
+  <!-- 업무 일지 직접 추가/관리 모달 (추가 버튼 전용) -->
   <div id="schedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 99999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box;">
     <div style="background: #111827; color: #f1f5f9; width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid #374151; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); overflow: hidden;">
       
       <!-- 상단 타이틀 -->
       <div style="background: #1f2937; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; flex-shrink: 0;">
         <div>
-          <h3 id="modalDateTitle" style="margin: 0; font-size: 15px; font-weight: bold; color: #818cf8;">날짜</h3>
-          <p id="modalLunar" style="margin: 2px 0 0 0; font-size: 11px; color: #9ca3af;">설비별 업무 일지 관리</p>
+          <h3 id="modalDateTitle" style="margin: 0; font-size: 15px; font-weight: bold; color: #818cf8;">업무 일지 등록</h3>
+          <p id="modalLunar" style="margin: 2px 0 0 0; font-size: 11px; color: #9ca3af;">날짜, 설비, 작업 내용 입력</p>
         </div>
         <button type="button" id="closeSchedModalBtn" style="background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 4px;"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -170,30 +172,32 @@
       <!-- 내부 콘텐츠 (스크롤 가능) -->
       <div style="padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px;">
         
-        <!-- 해당 날짜 작업 목록 -->
-        <div>
-          <h4 style="margin: 0 0 6px 0; font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;"><i class="fa-solid fa-list-check" style="margin-right: 4px; color: #818cf8;"></i> 해당 날짜 작업 목록</h4>
-          <div id="facilityTaskList" style="display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto;">
-            <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 6px 0;">등록된 작업이 없습니다.</p>
+        <!-- 새 설비 작업 추가 폼 (날짜 선택 추가됨) -->
+        <div style="background: #1f2937; padding: 12px; border-radius: 10px; border: 1px solid #374151; display: flex; flex-direction: column; gap: 10px;">
+          <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #a5b4fc;"><i class="fa-solid fa-pen-to-square" style="margin-right: 4px;"></i> 업무 일지 작성</h4>
+          <div>
+            <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">날짜 선택 *</label>
+            <input type="date" id="inputSchedDate" style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box;">
           </div>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #1f2937; margin: 0;">
-
-        <!-- 새 설비 작업 추가 폼 -->
-        <div style="background: #1f2937; padding: 12px; border-radius: 10px; border: 1px solid #374151; display: flex; flex-direction: column; gap: 8px;">
-          <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #a5b4fc;"><i class="fa-solid fa-plus" style="margin-right: 4px;"></i> 새 설비 작업 추가</h4>
           <div>
             <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">설비명 *</label>
             <input type="text" id="inputFacility" placeholder="예: 도크장 승강기" style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box;">
           </div>
           <div>
             <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">작업 내용 *</label>
-            <textarea id="inputTaskMemo" rows="2" placeholder="수행한 작업 내용을 적어주세요." style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
+            <textarea id="inputTaskMemo" rows="3" placeholder="수행한 작업 내용을 적어주세요." style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
-            <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-plus"></i> 추가하기</button>
+            <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
+          </div>
+        </div>
+
+        <!-- 해당 월 등록된 전체 작업 목록 확인 및 삭제 -->
+        <div>
+          <h4 style="margin: 0 0 6px 0; font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;"><i class="fa-solid fa-list-check" style="margin-right: 4px; color: #818cf8;"></i> 이달의 등록된 작업 목록</h4>
+          <div id="facilityTaskList" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+            <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 6px 0;">등록된 작업이 없습니다.</p>
           </div>
         </div>
 
@@ -283,7 +287,7 @@
 
     async function fetchRecordsFromSheet() {
       try {
-        const res = await fetch(SCRIPT_URL + '?t=' + Date.now()); // 캐시 방지
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
         records = await res.json();
         renderWork();
       } catch (e) { console.error(e); }
@@ -493,7 +497,6 @@
     // --- 2. 업무 일지 로직 ---
     let schedInitialized = false;
     let scheduleList = [];
-    let selectedSchedDate = '';
 
     async function initScheduleApp() {
       if (!schedInitialized) {
@@ -505,7 +508,7 @@
 
     async function fetchScheduleFromSheet() {
       try {
-        const res = await fetch(SCRIPT_URL + '?type=schedule&t=' + Date.now()); // 캐시 방지
+        const res = await fetch(SCRIPT_URL + '?type=schedule&t=' + Date.now());
         scheduleList = await res.json();
         if (!Array.isArray(scheduleList)) scheduleList = [];
       } catch (e) {
@@ -570,23 +573,9 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        // 버튼(button) 태그로 생성하여 모바일 터치 이벤트 100% 보장
-        var b = document.createElement('button');
-        b.type = 'button';
+        var b = document.createElement('div');
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
-        
-        // 클릭 및 터치 이벤트 동시 바인딩 (모바일 웹뷰 대응)
-        const triggerHandler = (function(dateKey) {
-          return function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openSchedModal(dateKey);
-          };
-        })(k);
-
-        b.onclick = triggerHandler;
-        b.ontouchend = triggerHandler;
         
         grid.appendChild(b);
       }
@@ -608,9 +597,8 @@
 
         if(dayItems.length > 0 || holName){
           any = true;
-          var li = document.createElement('button'); 
-          li.type = 'button'; 
-          li.className = `sched-li ${holName?'h':''}`;
+          var divLi = document.createElement('div'); 
+          divLi.className = `sched-li ${holName?'h':''}`;
           
           var nmHtml = '';
           if (holName) {
@@ -620,64 +608,54 @@
             nmHtml += `<div><b>${item.facility}</b> ${item.memo}</div>`;
           });
 
-          li.innerHTML = `<span class="d">${d}일</span><span class="nm">${nmHtml}</span>`;
-          
-          const listTrigger = (function(dateKey) {
-            return function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              openSchedModal(dateKey);
-            };
-          })(k);
-
-          li.onclick = listTrigger;
-          li.ontouchend = listTrigger;
-          
-          L.appendChild(li);
+          divLi.innerHTML = `<span class="d">${d}일</span><span class="nm">${nmHtml}</span>`;
+          L.appendChild(divLi);
         }
       }
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
-    function openSchedModal(dateKey) {
-      selectedSchedDate = dateKey;
-      var p = dateKey.split('-');
-      var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
-      var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-      var holidayMap = getHolidaysOfYear(+p[0]);
-      var holName = holidayMap[dateKey] || '';
+    // [변경] 상단 '추가' 버튼을 눌렀을 때 열리는 등록 창
+    function openNewSchedModal() {
+      var todayStr = new Date().toISOString().split('T')[0];
+      var pYearMonth = `${vy}-${String(vm + 1).padStart(2, '0')}`;
+      
+      // 오늘 날짜가 현재 보고 있는 달에 속해 있으면 오늘 날짜로, 아니면 해당 월의 1일로 기본 세팅
+      if (!todayStr.startsWith(pYearMonth)) {
+        todayStr = `${pYearMonth}-01`;
+      }
 
-      document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
-      document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
-
+      document.getElementById('inputSchedDate').value = todayStr;
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
       document.getElementById('schedModalMsg').textContent = '';
 
-      var tasks = scheduleList.filter(i => {
-        var sp = parseLocalDate(i.date);
-        return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === dateKey;
-      });
-
-      renderModalTaskList(tasks);
+      renderModalTaskList();
       document.getElementById('schedModal').style.display = 'flex';
     }
 
-    function renderModalTaskList(tasks) {
+    function renderModalTaskList() {
       var container = document.getElementById('facilityTaskList');
       if (!container) return;
       container.innerHTML = '';
 
-      if (tasks.length === 0) {
-        container.innerHTML = `<p style="font-size: 12px; color: #6b7280; text-align: center; margin: 6px 0;">등록된 작업이 없습니다.</p>`;
+      // 현재 선택된 월(vy, vm)에 해당하는 작업만 필터링
+      var currentMonthTasks = scheduleList.filter(i => {
+        var sp = parseLocalDate(i.date);
+        return sp && sp.y === vy && sp.m === (vm + 1);
+      });
+
+      if (currentMonthTasks.length === 0) {
+        container.innerHTML = `<p style="font-size: 12px; color: #6b7280; text-align: center; margin: 6px 0;">이달에 등록된 작업이 없습니다.</p>`;
         return;
       }
 
-      tasks.forEach(task => {
+      currentMonthTasks.forEach(task => {
         var div = document.createElement('div');
         div.style.cssText = 'background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;';
         div.innerHTML = `
           <div style="overflow: hidden;">
+            <div style="font-size: 10px; color: #94a3b8; margin-bottom: 2px;">${task.date}</div>
             <span style="display: inline-block; background: #311042; color: #a5b4fc; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #4c1d95; margin-bottom: 3px;">${task.facility}</span>
             <p style="margin: 0; font-size: 12px; color: #e5e7eb; word-break: break-all; white-space: pre-wrap;">${task.memo}</p>
           </div>
@@ -693,12 +671,7 @@
       
       await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id });
       await fetchScheduleFromSheet();
-      
-      var tasks = scheduleList.filter(i => {
-        var sp = parseLocalDate(i.date);
-        return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === selectedSchedDate;
-      });
-      renderModalTaskList(tasks);
+      renderModalTaskList();
       document.getElementById('schedModalMsg').textContent = '삭제 완료!';
     }
 
@@ -706,6 +679,7 @@
       var prevBtn = document.getElementById('prev');
       var nextBtn = document.getElementById('next');
       var todayBtn = document.getElementById('today');
+      var openNewBtn = document.getElementById('openNewSchedModalBtn');
       var closeBtn = document.getElementById('closeSchedModalBtn');
       var cancelBtn = document.getElementById('cancelSchedModalBtn');
       var addBtn = document.getElementById('addSchedTaskBtn');
@@ -718,42 +692,48 @@
         renderSchedGrid(); 
       };
 
+      if (openNewBtn) {
+        const openHandler = (e) => { e.preventDefault(); openNewSchedModal(); };
+        openNewBtn.onclick = openHandler;
+        openNewBtn.ontouchend = openHandler;
+      }
+
       var closeModal = () => { document.getElementById('schedModal').style.display = 'none'; };
       if (closeBtn) closeBtn.onclick = closeModal;
-      if (cancelBtn) cancelBtn.onclick = closeModal;
+      if (cancelBtn) closeBtn.onclick = closeModal;
 
-      if (addBtn) addBtn.onclick = async () => {
-        var fac = document.getElementById('inputFacility').value.trim();
-        var tsk = document.getElementById('inputTaskMemo').value.trim();
-        
-        if (!fac || !tsk) {
-          alert('설비명과 작업 내용을 모두 입력해 주세요.');
-          return;
-        }
+      if (addBtn) {
+        const addHandler = async () => {
+          var dateVal = document.getElementById('inputSchedDate').value;
+          var fac = document.getElementById('inputFacility').value.trim();
+          var tsk = document.getElementById('inputTaskMemo').value.trim();
+          
+          if (!dateVal || !fac || !tsk) {
+            alert('날짜, 설비명, 작업 내용을 모두 입력해 주세요.');
+            return;
+          }
 
-        document.getElementById('schedModalMsg').textContent = '추가 중...';
-        
-        await saveScheduleRowToSheet({ 
-          action: 'schedule', 
-          subAction: 'insert', 
-          date: selectedSchedDate, 
-          facility: fac, 
-          memo: tsk 
-        });
+          document.getElementById('schedModalMsg').textContent = '저장 중...';
+          
+          await saveScheduleRowToSheet({ 
+            action: 'schedule', 
+            subAction: 'insert', 
+            date: dateVal, 
+            facility: fac, 
+            memo: tsk 
+          });
 
-        document.getElementById('inputFacility').value = '';
-        document.getElementById('inputTaskMemo').value = '';
-        
-        await fetchScheduleFromSheet();
-        
-        var tasks = scheduleList.filter(i => {
-          var sp = parseLocalDate(i.date);
-          return sp && `${sp.y}-${String(sp.m).padStart(2, '0')}-${String(sp.d).padStart(2, '0')}` === selectedSchedDate;
-        });
-        
-        renderModalTaskList(tasks);
-        document.getElementById('schedModalMsg').textContent = '추가 완료!';
-      };
+          document.getElementById('inputFacility').value = '';
+          document.getElementById('inputTaskMemo').value = '';
+          
+          await fetchScheduleFromSheet();
+          renderModalTaskList();
+          document.getElementById('schedModalMsg').textContent = '저장 완료!';
+        };
+
+        addBtn.onclick = addHandler;
+        addBtn.ontouchend = addHandler;
+      }
     }
   </script>
 </body>
