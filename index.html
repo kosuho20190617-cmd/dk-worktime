@@ -153,7 +153,7 @@
     </div>
   </div>
 
-  <!-- 업무 일지 팝업 모달 -->
+  <!-- 업무 일지 팝업 모달 (업무 추가 및 목록 창) -->
   <div id="schedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 99999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box;">
     <div style="background: #111827; color: #f1f5f9; width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid #374151; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); overflow: hidden;">
       
@@ -294,11 +294,10 @@
       } catch (e) { console.error(e); }
     }
 
-    // [완벽 해결] 날짜 시차(타임존) 오류를 원천 차단하여 시트에 입력된 날짜 그대로 정확하게 읽어오는 함수
+    // 타임존 오차 방지 날짜 파서
     function parseLocalDate(dateStr) {
       if (!dateStr) return null;
       var s = String(dateStr).trim();
-      // 날짜 객체나 ISO 문자열인 경우 현지 시간 기준 년, 월, 일을 안전하게 추출
       if (s.includes('T') || s.includes('Z')) {
         var d = new Date(s);
         if (!isNaN(d.getTime())) {
@@ -567,11 +566,11 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        var b = document.createElement('div'); // 버튼 대신 div로 감싸고 내부 클릭 제어
+        var b = document.createElement('div');
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
-        // 확실하게 모달을 열 수 있도록 이벤트 리스너 직접 부착
+        // 날짜 칸 클릭 시 모달이 정상 오픈되도록 확실한 클로저 연결
         (function(dateKey) {
           b.onclick = function() {
             openSchedModal(dateKey);
@@ -716,7 +715,6 @@
           memo: tsk 
         });
 
-        document.getElementById('inputFacility').value = 'id'; // 초기화
         document.getElementById('inputFacility').value = '';
         document.getElementById('inputTaskMemo').value = '';
         
