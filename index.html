@@ -32,7 +32,7 @@
     .schedule-dark-theme .sched-dow div { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-bottom: 1px solid #1f2937; color: #9ca3af; }
     .schedule-dark-theme .sched-dow div:first-child { color: #f87171; }
     .schedule-dark-theme .sched-dow div:last-child { color: #60a5fa; }
-    .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; width: 100%; }
+    .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; width: 100%; -webkit-tap-highlight-color: transparent; }
     .schedule-dark-theme .sched-cell:nth-child(7n) { border-right: 0; }
     .schedule-dark-theme .sched-cell:hover { background: #1f2937; }
     .schedule-dark-theme .sched-top { display: flex; justify-content: space-between; align-items: center; width: 100%; pointer-events: none; }
@@ -45,7 +45,7 @@
     .schedule-dark-theme .sched-cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #818cf8; }
     .schedule-dark-theme .sched-foot { padding: 12px 16px; border-top: 1px solid #1f2937; background: #0f172a; }
     .schedule-dark-theme .sched-foot h3 { margin: 0 0 6px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; color: #e2e8f0; }
-    .schedule-dark-theme .sched-li { display: flex; gap: 12px; align-items: flex-start; width: 100%; font: inherit; font-size: 12px; color: #cbd5e1; background: none; border: 0; border-bottom: 1px dashed #1e293b; padding: 8px 2px; cursor: pointer; text-align: left; }
+    .schedule-dark-theme .sched-li { display: flex; gap: 12px; align-items: flex-start; width: 100%; font: inherit; font-size: 12px; color: #cbd5e1; background: none; border: 0; border-bottom: 1px dashed #1e293b; padding: 8px 2px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
     .schedule-dark-theme .sched-li:hover { color: #ffffff; background: rgba(255,255,255,0.02); }
     .schedule-dark-theme .sched-li .d { min-width: 50px; color: #94a3b8; font-weight: 600; }
     .schedule-dark-theme .sched-li .nm { display: flex; flex-direction: column; gap: 2px; flex: 1; }
@@ -283,7 +283,7 @@
 
     async function fetchRecordsFromSheet() {
       try {
-        const res = await fetch(SCRIPT_URL);
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now()); // 캐시 방지
         records = await res.json();
         renderWork();
       } catch (e) { console.error(e); }
@@ -505,7 +505,7 @@
 
     async function fetchScheduleFromSheet() {
       try {
-        const res = await fetch(SCRIPT_URL + '?type=schedule');
+        const res = await fetch(SCRIPT_URL + '?type=schedule&t=' + Date.now()); // 캐시 방지
         scheduleList = await res.json();
         if (!Array.isArray(scheduleList)) scheduleList = [];
       } catch (e) {
@@ -570,19 +570,23 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        // 버튼(button) 태그로 생성하여 클릭/터치 이벤트 보장
+        // 버튼(button) 태그로 생성하여 모바일 터치 이벤트 100% 보장
         var b = document.createElement('button');
         b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
-        // 확실하게 팝업창을 여는 이벤트 연결
-        b.onclick = (function(dateKey) {
+        // 클릭 및 터치 이벤트 동시 바인딩 (모바일 웹뷰 대응)
+        const triggerHandler = (function(dateKey) {
           return function(e) {
             e.preventDefault();
+            e.stopPropagation();
             openSchedModal(dateKey);
           };
         })(k);
+
+        b.onclick = triggerHandler;
+        b.ontouchend = triggerHandler;
         
         grid.appendChild(b);
       }
@@ -618,12 +622,16 @@
 
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${nmHtml}</span>`;
           
-          li.onclick = (function(dateKey) {
+          const listTrigger = (function(dateKey) {
             return function(e) {
               e.preventDefault();
+              e.stopPropagation();
               openSchedModal(dateKey);
             };
           })(k);
+
+          li.onclick = listTrigger;
+          li.ontouchend = listTrigger;
           
           L.appendChild(li);
         }
