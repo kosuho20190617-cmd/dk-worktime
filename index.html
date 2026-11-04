@@ -93,12 +93,6 @@
     .schedule-dark-theme .sched-li:hover { color: #ffffff; background: rgba(255,255,255,0.02); }
     .schedule-dark-theme .sched-li .d { min-width: 50px; color: #94a3b8; }
     .schedule-dark-theme .sched-li.h .nm { color: #f87171; font-weight: 600; }
-
-    .schedule-dark-theme .sched-memo-sec { background: #111827; color: #f1f5f9; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); padding: 16px 20px; border-top: 4px solid #6366f1; border-left: 1px solid #1f2937; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; }
-    .schedule-dark-theme .sched-memo-sec h2 { margin: 0 0 4px; font: 800 18px/1.3 'Nanum Myeongjo', Batang, serif; color: #ffffff; }
-    .schedule-dark-theme .sched-memo-body, .schedule-dark-theme textarea { display: block; width: 100%; min-height: 120px; font: inherit; font-size: 14px; line-height: 24px; color: #e2e8f0; background: #111827; border: 0; padding: 0; margin: 0; resize: vertical; }
-    .schedule-dark-theme textarea { background: #0b0f19; border: 1px solid #374151; border-radius: 8px; padding: 10px; color: #fff; }
-    .schedule-dark-theme .sched-memo-body { white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
 <body class="transition-colors duration-200">
@@ -194,7 +188,7 @@
     </main>
   </div>
 
-  <!-- 3. 업무 일지 화면 (상단 여백 확보 및 구글 시트 연동) -->
+  <!-- 3. 업무 일지 화면 (팝업 방식 및 설비명/작업내용 분리) -->
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition">
@@ -220,19 +214,36 @@
         <div class="sched-grid" id="schedGrid"></div>
         <div class="sched-foot"><h3 id="fh"></h3><div id="list"></div></div>
       </div>
+    </div>
+  </div>
 
-      <section class="sched-memo-sec" id="memo" aria-live="polite">
-        <h2 id="mTitle"></h2>
-        <div id="lunarInfo" style="font-size: 11px; opacity: 0.7; margin-bottom: 8px; color: #94a3b8;"></div>
-        <div class="sched-memo-body" id="mBody"></div>
-        <textarea id="mEdit" hidden aria-label="내용" placeholder="이 날의 일정이나 메모를 적어 보세요."></textarea>
-        <div class="actions" style="display:flex; gap:8px; margin-top:12px;">
-          <button type="button" id="bEdit" style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#e2e8f0; border:1px solid #374151; cursor:pointer; font-size:13px; font-weight:500;">수정</button>
-          <button type="button" id="bSave" class="primary" hidden style="padding:6px 16px; border-radius:8px; background:#6366f1; color:#fff; border:0; cursor:pointer; font-size:13px; font-weight:600;">저장</button>
-          <button type="button" id="bCancel" hidden style="padding:6px 14px; border-radius:8px; background:#1f2937; color:#9ca3af; border:1px solid #374151; cursor:pointer; font-size:13px;">취소</button>
-          <span id="schedMsg" style="font-size:12px; color:#34d399; align-self:center; font-weight:500;"></span>
+  <!-- 업무 일지 상세 입력/수정 팝업 모달 -->
+  <div id="schedModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-slate-900 text-slate-100 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="bg-slate-800 px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+        <div>
+          <h3 id="modalDateTitle" class="text-base font-bold text-indigo-400">날짜</h3>
+          <p id="modalLunar" class="text-[11px] text-slate-400">업무 일지 기록</p>
         </div>
-      </section>
+        <button type="button" id="closeSchedModalBtn" class="text-slate-400 hover:text-white p-1.5"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5"><i class="fa-solid fa-gears text-indigo-400 mr-1"></i> 설비명</label>
+          <input type="text" id="inputFacility" placeholder="예: 메인 컨베이어 #1" class="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5"><i class="fa-solid fa-pen-to-square text-indigo-400 mr-1"></i> 작업 내용</label>
+          <textarea id="inputTaskMemo" rows="4" placeholder="수행한 작업 및 특이사항을 적어주세요." class="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+        </div>
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <span id="schedModalMsg" class="text-xs font-medium text-emerald-400"></span>
+          <div class="flex space-x-2 ml-auto">
+            <button type="button" id="cancelSchedModalBtn" class="px-4 py-2 text-sm text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition">취소</button>
+            <button type="button" id="saveSchedModalBtn" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow transition">저장</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -515,9 +526,10 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (구글 시트 연동 포함) ---
+    // --- 2. 업무 일지 로직 (팝업 모달 및 설비명/작업내용 분리 저장) ---
     let schedInitialized = false;
     let scheduleNotes = {};
+    let selectedSchedDate = '';
 
     async function initScheduleApp() {
       if (!schedInitialized) {
@@ -540,11 +552,9 @@
           });
         }
       } catch (e) {
-        // 네트워크 실패 시 로컬스토리지 백업 데이터 활용
         scheduleNotes = JSON.parse(localStorage.getItem('paper-calendar-notes-v1') || '{}');
       }
       renderSchedGrid();
-      renderMemo();
     }
 
     async function saveScheduleToSheet(dateKey, memoText) {
@@ -610,7 +620,7 @@
 
     var dNow = new Date();
     var todayKey = dNow.getFullYear() + '-' + String(dNow.getMonth() + 1).padStart(2, '0') + '-' + String(dNow.getDate()).padStart(2, '0');
-    var vy = dNow.getFullYear(), vm = dNow.getMonth(), sel = todayKey, editing = false;
+    var vy = dNow.getFullYear(), vm = dNow.getMonth();
 
     function renderSchedGrid(){
       var yEl = document.getElementById('y');
@@ -640,15 +650,13 @@
 
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${k===sel?'sel':''} ${txt?'has':''}`;
+        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${txt?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${txt?`<span class="sched-p">${txt}</span>`:''}`;
         
+        // 날짜 터치 시 팝업 열기
         b.onclick = (function(dateKey) {
           return function() {
-            sel = dateKey;
-            editing = false;
-            renderSchedGrid();
-            renderMemo();
+            openSchedModal(dateKey, holidayMap);
           };
         })(k);
 
@@ -674,10 +682,7 @@
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${scheduleNotes[k]||''}</span>`;
           li.onclick = (function(dateKey) {
             return function() {
-              sel = dateKey;
-              editing = false;
-              renderSchedGrid();
-              renderMemo();
+              openSchedModal(dateKey, holidayMap);
             };
           })(k);
           L.appendChild(li);
@@ -686,71 +691,86 @@
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 메모가 없습니다.</p>`;
     }
 
-    function renderMemo(){
-      var p = sel.split('-'); 
+    function openSchedModal(dateKey, holidayMap) {
+      selectedSchedDate = dateKey;
+      var p = dateKey.split('-');
       var dateObj = new Date(+p[0], +p[1]-1, +p[2]);
       var weekDays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-      var holidayMap = getHolidaysOfYear(+p[0]);
-      var holName = holidayMap[sel] || '';
-      
-      var mTitle = document.getElementById('mTitle');
-      var lunarInfo = document.getElementById('lunarInfo');
-      if (mTitle) mTitle.textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
-      if (lunarInfo) lunarInfo.textContent = `${p[0]}년 기록`;
+      var holName = holidayMap ? holidayMap[dateKey] : '';
 
-      var txt = scheduleNotes[sel]||'';
-      var body = document.getElementById('mBody'), edit = document.getElementById('mEdit');
-      if (!body || !edit) return;
+      document.getElementById('modalDateTitle').textContent = `${+p[1]}월 ${+p[2]}일 ${weekDays[dateObj.getDay()]}` + (holName ? ` (${holName})` : '');
+      document.getElementById('modalLunar').textContent = `${p[0]}년 업무 일지`;
 
-      body.hidden = editing; edit.hidden = !editing;
-      var bEdit = document.getElementById('bEdit');
-      var bSave = document.getElementById('bSave');
-      var bCancel = document.getElementById('bCancel');
+      // 기존 저장된 내용이 있다면 [설비명] / [작업 내용] 파싱
+      var existing = scheduleNotes[dateKey] || '';
+      var facility = '';
+      var taskMemo = '';
 
-      if (bEdit) bEdit.hidden = editing;
-      if (bSave) bSave.hidden = !editing;
-      if (bCancel) bCancel.hidden = !editing;
+      if (existing.startsWith('[')) {
+        var match = existing.match(/^\[(.*?)\]\s*(.*)$/);
+        if (match) {
+          facility = match[1];
+          taskMemo = match[2];
+        } else {
+          taskMemo = existing;
+        }
+      } else {
+        taskMemo = existing;
+      }
 
-      if(editing){ edit.value = txt; edit.focus(); }
-      else { body.textContent = txt || '아직 적은 내용이 없어요. 수정을 눌러 추가해 보세요.'; body.className = 'sched-memo-body' + (txt ? '' : ' text-slate-500'); }
-      document.getElementById('schedMsg').textContent = '';
+      document.getElementById('inputFacility').value = facility;
+      document.getElementById('inputTaskMemo').value = taskMemo;
+      document.getElementById('schedModalMsg').textContent = '';
+      document.getElementById('schedModal').classList.remove('hidden');
     }
 
     function setupScheduleEventListeners() {
       var prevBtn = document.getElementById('prev');
       var nextBtn = document.getElementById('next');
       var todayBtn = document.getElementById('today');
-      var bEditBtn = document.getElementById('bEdit');
-      var bCancelBtn = document.getElementById('bCancel');
-      var bSaveBtn = document.getElementById('bSave');
+      var closeBtn = document.getElementById('closeSchedModalBtn');
+      var cancelBtn = document.getElementById('cancelSchedModalBtn');
+      var saveBtn = document.getElementById('saveSchedModalBtn');
 
-      if (prevBtn) prevBtn.onclick = () => { vm--; if(vm<0){vm=11;vy--;} renderSchedGrid(); renderMemo(); };
-      if (nextBtn) nextBtn.onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); renderMemo(); };
+      if (prevBtn) prevBtn.onclick = () => { vm--; if(vm<0){vm=11;vy--;} renderSchedGrid(); };
+      if (nextBtn) nextBtn.onclick = () => { vm++; if(vm>11){vm=0;vy++;} renderSchedGrid(); };
       if (todayBtn) todayBtn.onclick = () => { 
-        sel = todayKey; 
         var a = todayKey.split('-'); 
         vy = +a[0]; 
         vm = +a[1]-1; 
         renderSchedGrid(); 
-        renderMemo(); 
       };
-      if (bEditBtn) bEditBtn.onclick = () => { editing=true; renderMemo(); };
-      if (bCancelBtn) bCancelBtn.onclick = () => { editing=false; renderMemo(); };
-      if (bSaveBtn) bSaveBtn.onclick = async () => {
-        var editEl = document.getElementById('mEdit');
-        if (!editEl) return;
-        var v = editEl.value.trim();
-        if(v) scheduleNotes[sel] = v; else delete scheduleNotes[sel];
-        
-        // 로컬스토리지 백업 및 구글 시트 전송
-        localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(scheduleNotes));
-        document.getElementById('schedMsg').textContent = '저장 중...';
-        await saveScheduleToSheet(sel, v);
-        document.getElementById('schedMsg').textContent = '구글 시트 저장 완료!';
 
-        editing=false; 
-        renderSchedGrid(); 
-        renderMemo();
+      var closeModal = () => { document.getElementById('schedModal').classList.add('hidden'); };
+      if (closeBtn) closeBtn.onclick = closeModal;
+      if (cancelBtn) cancelBtn.onclick = closeModal;
+
+      if (saveBtn) saveBtn.onclick = async () => {
+        var fac = document.getElementById('inputFacility').value.trim();
+        var tsk = document.getElementById('inputTaskMemo').value.trim();
+        
+        var combined = '';
+        if (fac || tsk) {
+          combined = `[${fac}] ${tsk}`;
+        }
+
+        if (combined) {
+          scheduleNotes[selectedSchedDate] = combined;
+        } else {
+          delete scheduleNotes[selectedSchedDate];
+        }
+
+        // 로컬 백업 및 구글 시트 전송
+        localStorage.setItem('paper-calendar-notes-v1', JSON.stringify(scheduleNotes));
+        document.getElementById('schedModalMsg').textContent = '저장 중...';
+        
+        await saveScheduleToSheet(selectedSchedDate, combined);
+        
+        document.getElementById('schedModalMsg').textContent = '저장 완료!';
+        setTimeout(() => {
+          closeModal();
+          renderSchedGrid();
+        }, 500);
       };
     }
   </script>
