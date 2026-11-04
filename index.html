@@ -16,43 +16,10 @@
         --desk: #121417; --paper: #1e2229; --ink: #ecebe5; --muted: #9a9da3; --line: #2e333d;
       }
     }
-    html, body {
-      background-color: var(--desk);
-      color: var(--ink);
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden; /* 바깥쪽 스크롤 방지 및 완벽한 영역 고정 */
-    }
-
-    /* 앱 전체 영역을 상단바와 하단바 사이로 엄격히 제한 */
-    .app-container {
-      position: absolute;
-      top: env(safe-area-inset-top, 0px);
-      bottom: env(safe-area-inset-bottom, 0px);
-      left: 0;
-      right: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
+    html, body { background-color: var(--desk); color: var(--ink); font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    .schedule-dark-theme {
-      background-color: #0b0f19 !important;
-      color: #f1f5f9 !important;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 12px;
-      box-sizing: border-box;
-    }
+    .schedule-dark-theme { background-color: #0b0f19 !important; color: #f1f5f9 !important; min-height: 100vh; padding-top: max(env(safe-area-inset-top, 0px), 36px) !important; }
     .schedule-dark-theme .sched-sheet { background: #111827 !important; border: 1px solid #1f2937; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); overflow: hidden; }
     .schedule-dark-theme .sched-binding { height: 18px; background: radial-gradient(circle at 50% 52%, #0b0f19 0 4px, transparent 5px) 0 0/36px 18px repeat-x, #111827; border-bottom: 1px solid #1f2937; }
     .schedule-dark-theme .sched-head { background: linear-gradient(135deg, #1e1b4b, #311042); color: #ffffff; display: flex; align-items: flex-end; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #2d3748; }
@@ -87,125 +54,125 @@
 </head>
 <body class="transition-colors duration-200">
 
-  <!-- 앱 전체를 감싸는 안전 영역 컨테이너 -->
-  <div class="app-container">
-
-    <!-- 1. 홈 화면 -->
-    <div id="homeView" class="h-full flex flex-col items-center justify-center p-6 space-y-6 overflow-y-auto">
-      <div class="text-center space-y-2">
-        <div class="inline-block bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-2xl text-indigo-600 dark:text-indigo-400 mb-2 shadow-sm">
-          <i class="fa-solid fa-clipboard-user text-4xl"></i>
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">근무 및 업무 통합 시스템</h1>
-        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">원하시는 메뉴를 선택해 주세요.</p>
+  <!-- 1. 홈 화면 -->
+  <div id="homeView" class="min-h-screen flex flex-col items-center justify-center p-6 space-y-6">
+    <div class="text-center space-y-2">
+      <div class="inline-block bg-indigo-100 dark:bg-indigo-900/50 p-3 rounded-2xl text-indigo-600 dark:text-indigo-400 mb-2 shadow-sm">
+        <i class="fa-solid fa-clipboard-user text-4xl"></i>
       </div>
-      <div class="w-full max-w-sm space-y-4">
-        <button type="button" onclick="switchView('work')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
-          <div class="flex items-center space-x-3">
-            <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-clock text-xl"></i></div>
-            <div class="text-left">
-              <div class="text-lg font-bold">근무 및 연차</div>
-              <div class="text-xs text-indigo-200">연장,특근 근무 및 연차 관리</div>
-            </div>
-          </div>
-          <i class="fa-solid fa-chevron-right text-indigo-200 group-hover:translate-x-1 transition"></i>
-        </button>
-        <button type="button" onclick="switchView('schedule')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
-          <div class="flex items-center space-x-3">
-            <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-calendar-days text-xl"></i></div>
-            <div class="text-left">
-              <div class="text-lg font-bold">업무 일지</div>
-              <div class="text-xs text-emerald-100">업무 내용 관리</div>
-            </div>
-          </div>
-          <i class="fa-solid fa-chevron-right text-emerald-200 group-hover:translate-x-1 transition"></i>
-        </button>
-      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">근무 및 업무 통합 시스템</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">원하시는 메뉴를 선택해 주세요.</p>
     </div>
-
-    <!-- 2. 근무 및 연차 화면 -->
-    <div id="workView" class="hidden h-full flex flex-col overflow-hidden">
-      <header class="bg-indigo-700 text-white shadow-md flex-shrink-0">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div class="flex items-center space-x-2 sm:space-x-3">
-            <button type="button" onclick="goHome()" class="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white mr-1" title="홈으로"><i class="fa-solid fa-house"></i></button>
-            <div>
-              <h1 class="text-sm sm:text-xl font-bold tracking-tight">근무 및 연차 관리</h1>
-              <p class="text-[10px] sm:text-xs text-indigo-200 hidden sm:block">구글 시트 실시간 연동</p>
-            </div>
-          </div>
-          <div class="flex items-center space-x-2">
-            <button type="button" id="exportCsvBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1 border border-indigo-400/30"><i class="fa-solid fa-file-csv"></i><span class="hidden sm:inline">CSV</span></button>
-            <button type="button" id="openAddModalBtn" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition flex items-center space-x-1"><i class="fa-solid fa-plus"></i><span>등록</span></button>
+    <div class="w-full max-w-sm space-y-4">
+      <button type="button" onclick="switchView('work')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-clock text-xl"></i></div>
+          <div class="text-left">
+            <div class="text-lg font-bold">근무 및 연차</div>
+            <div class="text-xs text-indigo-200">연장,특근 근무 및 연차 관리</div>
           </div>
         </div>
-      </header>
-      <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 flex-1 w-full space-y-4 overflow-y-auto">
-        <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div class="flex items-center space-x-2 w-full md:w-auto justify-between">
-            <button type="button" id="prevMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-left"></i></button>
-            <input type="month" id="monthPicker" class="text-base font-bold bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1">
-            <button type="button" id="nextMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-right"></i></button>
-            <button type="button" id="todayBtn" class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-600">이번 달</button>
+        <i class="fa-solid fa-chevron-right text-indigo-200 group-hover:translate-x-1 transition"></i>
+      </button>
+      <button type="button" onclick="switchView('schedule')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl shadow-md transition flex items-center justify-between group">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white/15 p-3 rounded-xl"><i class="fa-regular fa-calendar-days text-xl"></i></div>
+          <div class="text-left">
+            <div class="text-lg font-bold">업무 일지</div>
+            <div class="text-xs text-emerald-100">업무 내용 관리</div>
           </div>
-          <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">근무자:</span>
-            <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5"><option value="ALL">전체 보기</option></select>
-          </div>
-        </section>
-        <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-6 overflow-x-auto">
-          <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-2 mb-2 min-w-[280px]">
-            <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
-          </div>
-          <div id="calendarGrid" class="grid grid-cols-7 gap-1 min-w-[280px]"></div>
-        </section>
-        <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 space-y-3">
-          <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2"><i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span></h3>
-          <div id="workerBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
-        </section>
-      </main>
+        </div>
+        <i class="fa-solid fa-chevron-right text-emerald-200 group-hover:translate-x-1 transition"></i>
+      </button>
     </div>
+  </div>
 
-    <!-- 3. 업무 일지 화면 -->
-    <div id="scheduleView" class="hidden schedule-dark-theme">
-      <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md flex-shrink-0">
-        <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition"><i class="fa-solid fa-house"></i><span>홈으로</span></button>
-        <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)</span>
-      </div>
-      <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
-        <div class="sched-sheet">
-          <div class="sched-binding" aria-hidden="true"></div>
-          <div class="sched-head">
-            <div class="sched-ym"><small id="y"></small><b id="m"></b></div>
-            <div class="sched-nav">
-              <button type="button" id="openNewSchedModalBtn" onclick="openNewSchedModal()" style="background: #4f46e5; border-color: #6366f1; font-weight: bold;"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
-              <button type="button" id="prev" aria-label="이전 달">◀</button>
-              <button type="button" id="today">오늘</button>
-              <button type="button" id="next" aria-label="다음 달">▶</button>
-            </div>
+  <!-- 2. 근무 및 연차 화면 -->
+  <div id="workView" class="hidden min-h-screen flex flex-col">
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 pt-3 sm:pt-0">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <button type="button" onclick="goHome()" class="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white mr-1" title="홈으로"><i class="fa-solid fa-house"></i></button>
+          <div>
+            <h1 class="text-sm sm:text-xl font-bold tracking-tight">근무 및 연차 관리</h1>
+            <p class="text-[10px] sm:text-xs text-indigo-200 hidden sm:block">구글 시트 실시간 연동</p>
           </div>
-          <div class="sched-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
-          <div class="sched-grid" id="schedGrid"></div>
-          <div class="sched-foot"><h3 id="fh"></h3><div id="list"></div></div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button type="button" id="exportCsvBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1 border border-indigo-400/30"><i class="fa-solid fa-file-csv"></i><span class="hidden sm:inline">CSV</span></button>
+          <button type="button" id="openAddModalBtn" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-sm transition flex items-center space-x-1"><i class="fa-solid fa-plus"></i><span>등록</span></button>
         </div>
       </div>
-    </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4">
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-2 w-full md:w-auto justify-between">
+          <button type="button" id="prevMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-left"></i></button>
+          <input type="month" id="monthPicker" class="text-base font-bold bg-transparent border border-slate-300 dark:border-slate-600 rounded-lg px-2 py-1">
+          <button type="button" id="nextMonthBtn" class="p-2 text-slate-500 hover:text-indigo-600 rounded-lg"><i class="fa-solid fa-chevron-right"></i></button>
+          <button type="button" id="todayBtn" class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-600">이번 달</button>
+        </div>
+        <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">근무자:</span>
+          <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5"><option value="ALL">전체 보기</option></select>
+        </div>
+      </section>
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-6 overflow-x-auto">
+        <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-2 mb-2 min-w-[280px]">
+          <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1 min-w-[280px]"></div>
+      </section>
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+        <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2"><i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span></h3>
+        <div id="workerBreakdownContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5"></div>
+      </section>
+    </main>
+  </div>
 
+  <!-- 3. 업무 일지 화면 -->
+  <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
+    <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
+      <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition"><i class="fa-solid fa-house"></i><span>홈으로</span></button>
+      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)</span>
+    </div>
+    <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
+      <div class="sched-sheet">
+        <div class="sched-binding" aria-hidden="true"></div>
+        <div class="sched-head">
+          <div class="sched-ym"><small id="y"></small><b id="m"></b></div>
+          <div class="sched-nav">
+            <!-- [추가] 버튼 - onclick 직접 연결로 클릭 신뢰성 100% 확보 -->
+            <button type="button" id="openNewSchedModalBtn" onclick="openNewSchedModal()" style="background: #4f46e5; border-color: #6366f1; font-weight: bold;"><i class="fa-solid fa-plus mr-1"></i> 추가</button>
+            <button type="button" id="prev" aria-label="이전 달">◀</button>
+            <button type="button" id="today">오늘</button>
+            <button type="button" id="next" aria-label="다음 달">▶</button>
+          </div>
+        </div>
+        <div class="sched-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+        <div class="sched-grid" id="schedGrid"></div>
+        <div class="sched-foot"><h3 id="fh"></h3><div id="list"></div></div>
+      </div>
+    </div>
   </div>
 
   <!-- 업무 일지 직접 추가/관리 모달 -->
   <div id="schedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 99999; justify-content: center; align-items: center; padding: 12px; box-sizing: border-box;">
     <div style="background: #111827; color: #f1f5f9; width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid #374151; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); overflow: hidden;">
       
+      <!-- 상단 타이틀 -->
       <div style="background: #1f2937; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; flex-shrink: 0;">
         <div>
-          <h3 style="margin: 0; font-size: 15px; font-weight: bold; color: #818cf8;">업무 일지 등록</h3>
-          <p style="margin: 2px 0 0 0; font-size: 11px; color: #9ca3af;">날짜, 설비, 작업 내용 입력</p>
+          <h3 id="modalDateTitle" style="margin: 0; font-size: 15px; font-weight: bold; color: #818cf8;">업무 일지 등록</h3>
+          <p id="modalLunar" style="margin: 2px 0 0 0; font-size: 11px; color: #9ca3af;">날짜, 설비, 작업 내용 입력</p>
         </div>
         <button type="button" onclick="closeSchedModal()" style="background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; padding: 4px;"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
+      <!-- 내부 콘텐츠 (스크롤 가능) -->
       <div style="padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px;">
+        
+        <!-- 새 설비 작업 추가 폼 -->
         <div style="background: #1f2937; padding: 12px; border-radius: 10px; border: 1px solid #374151; display: flex; flex-direction: column; gap: 10px;">
           <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #a5b4fc;"><i class="fa-solid fa-pen-to-square" style="margin-right: 4px;"></i> 업무 일지 작성</h4>
           <div>
@@ -222,18 +189,21 @@
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
-            <button type="button" onclick="submitSchedTask()" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
+            <button type="button" id="addSchedTaskBtn" onclick="submitSchedTask()" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
           </div>
         </div>
 
+        <!-- 해당 월 등록된 전체 작업 목록 확인 및 삭제 -->
         <div>
           <h4 style="margin: 0 0 6px 0; font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;"><i class="fa-solid fa-list-check" style="margin-right: 4px; color: #818cf8;"></i> 이달의 등록된 작업 목록</h4>
           <div id="facilityTaskList" style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
             <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 6px 0;">등록된 작업이 없습니다.</p>
           </div>
         </div>
+
       </div>
 
+      <!-- 하단 닫기 버튼 -->
       <div style="background: #1f2937; padding: 12px 16px; border-top: 1px solid #374151; display: flex; justify-content: flex-end; flex-shrink: 0;">
         <button type="button" onclick="closeSchedModal()" style="padding: 8px 16px; background: #374151; color: #d1d5db; border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;">닫기</button>
       </div>
@@ -645,6 +615,7 @@
       if(!any) L.innerHTML = `<p class="text-xs text-slate-500 py-1">작성된 업무 일지가 없습니다.</p>`;
     }
 
+    // [전역 함수] 업무일지 등록 모달 열기
     window.openNewSchedModal = function() {
       var modal = document.getElementById('schedModal');
       if (!modal) return;
@@ -665,11 +636,13 @@
       modal.style.display = 'flex';
     };
 
+    // [전역 함수] 업무일지 등록 모달 닫기
     window.closeSchedModal = function() {
       var modal = document.getElementById('schedModal');
       if (modal) modal.style.display = 'none';
     };
 
+    // [전역 함수] 작업 저장하기
     window.submitSchedTask = async function() {
       var dateVal = document.getElementById('inputSchedDate').value;
       var fac = document.getElementById('inputFacility').value.trim();
