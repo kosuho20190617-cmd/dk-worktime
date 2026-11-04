@@ -32,16 +32,16 @@
     .schedule-dark-theme .sched-dow div { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; border-bottom: 1px solid #1f2937; color: #9ca3af; }
     .schedule-dark-theme .sched-dow div:first-child { color: #f87171; }
     .schedule-dark-theme .sched-dow div:last-child { color: #60a5fa; }
-    .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; }
+    .schedule-dark-theme .sched-cell { font: inherit; color: #e5e7eb; text-align: left; background: #111827; border: 0; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937; min-height: 72px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; position: relative; transition: background 0.15s; width: 100%; }
     .schedule-dark-theme .sched-cell:nth-child(7n) { border-right: 0; }
     .schedule-dark-theme .sched-cell:hover { background: #1f2937; }
-    .schedule-dark-theme .sched-top { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-dark-theme .sched-top { display: flex; justify-content: space-between; align-items: center; width: 100%; pointer-events: none; }
     .schedule-dark-theme .sched-n { font-size: 12px; font-weight: 600; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: #d1d5db; }
     .schedule-dark-theme .sched-cell.c0 .sched-n, .schedule-dark-theme .sched-cell.hol .sched-n { color: #f87171; }
     .schedule-dark-theme .sched-cell.c6 .sched-n { color: #60a5fa; }
     .schedule-dark-theme .sched-cell.today .sched-n { background: #6366f1; color: #ffffff; }
     .schedule-dark-theme .sched-hn { font-size: 9px; line-height: 1.1; color: #f87171; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
-    .schedule-dark-theme .sched-p { font-size: 10px; line-height: 1.2; color: #9ca3af; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+    .schedule-dark-theme .sched-p { font-size: 10px; line-height: 1.2; color: #9ca3af; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; pointer-events: none; }
     .schedule-dark-theme .sched-cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #818cf8; }
     .schedule-dark-theme .sched-foot { padding: 12px 16px; border-top: 1px solid #1f2937; background: #0f172a; }
     .schedule-dark-theme .sched-foot h3 { margin: 0 0 6px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; color: #e2e8f0; }
@@ -557,7 +557,11 @@
 
       for(var i=0; i<total; i++){
         var d = i - first + 1;
-        if(d < 1 || d > days){ grid.appendChild(document.createElement('div')); continue; }
+        if(d < 1 || d > days){ 
+          var emptyDiv = document.createElement('div');
+          grid.appendChild(emptyDiv);
+          continue; 
+        }
         
         var k = vy + '-' + String(vm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
         var dayItems = dateMap[k] || [];
@@ -566,13 +570,16 @@
         var holName = holidayMap[k] || '';
         var isHol = ((i % 7 === 0) || holName !== '');
 
-        var b = document.createElement('div');
+        // 버튼(button) 태그를 사용하여 모바일/데스크톱 터치/클릭 이벤트 누락 원천 차단
+        var b = document.createElement('button');
+        b.type = 'button';
         b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
-        // 날짜 칸 클릭 시 모달이 정상 오픈되도록 확실한 클로저 연결
-        (function(dateKey) {
-          b.onclick = function() {
+        // 클릭 시 확실하게 모달 호출
+        b.onclick = (function(dateKey) {
+          return function(e) {
+            e.preventDefault();
             openSchedModal(dateKey);
           };
         })(k);
@@ -598,11 +605,14 @@
 
         if(dayItems.length > 0 || holName){
           any = true;
-          var li = document.createElement('button'); li.type = 'button'; li.className = `sched-li ${holName?'h':''}`;
+          var li = document.createElement('button'); 
+          li.type = 'button'; 
+          li.className = `sched-li ${holName?'h':''}`;
           li.innerHTML = `<span class="d">${d}일</span><span class="nm">${holName ? '['+holName+'] ' : ''}${displayTxt}</span>`;
           
-          (function(dateKey) {
-            li.onclick = function() {
+          li.onclick = (function(dateKey) {
+            return function(e) {
+              e.preventDefault();
               openSchedModal(dateKey);
             };
           })(k);
