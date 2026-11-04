@@ -136,7 +136,7 @@
   <div id="scheduleView" class="hidden min-h-screen flex flex-col p-3 sm:p-6 schedule-dark-theme">
     <div class="max-w-[820px] w-full mx-auto mb-3 flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60 shadow-md">
       <button type="button" onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow transition"><i class="fa-solid fa-house"></i><span>홈으로</span></button>
-      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지)</span>
+      <span class="text-xs font-bold text-slate-300 tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-cloud text-indigo-400"></i> 구글 시트 실시간 연동 (업무일지) v5</span>
     </div>
     <div class="cal-wrap flex flex-col gap-4 max-w-[820px] w-full mx-auto pb-6">
   <!-- 업무 일지 직접 추가/관리 모달 -->
@@ -289,6 +289,29 @@
     let records = [];
     let curY = new Date().getFullYear(), curM = new Date().getMonth() + 1;
     let workInitialized = false;
+    const openWorkers = new Set();
+
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var ed = t.closest('[data-rec-edit]');
+      if (ed) { e.preventDefault(); openEditModal(ed.getAttribute('data-rec-edit')); return; }
+      var dl = t.closest('[data-rec-del]');
+      if (dl) {
+        e.preventDefault();
+        var id = dl.getAttribute('data-rec-del');
+        if (dl.getAttribute('data-armed') === '1') {
+          records = records.filter(function(r){ return String(r.id) !== String(id); });
+          sendDataToSheet({ action: 'delete', id: id });
+          renderWork();
+        } else {
+          dl.setAttribute('data-armed', '1');
+          dl.textContent = '한 번 더';
+          dl.style.background = '#b91c1c'; dl.style.color = '#fff';
+          setTimeout(function(){ renderWork(); }, 3000);
+        }
+      }
+    });
 
     async function initWorkApp() {
       if (!workInitialized) {
@@ -363,7 +386,8 @@
       const map = {};
       monthly.forEach(r => {
         const name = r.workerName || '미지정';
-        if (!map[name]) map[name] = { totalHours: 0, overtime: 0, holiday: 0, night: 0, leave: 0 };
+        if (!map[name]) map[name] = { totalHours: 0, overtime: 0, holiday: 0, night: 0, leave: 0, recs: [] };
+        map[name].recs.push(r);
         const hrs = parseFloat(r.hours) || 0;
         if (['연장근무', '휴일특근', '야간근무'].includes(r.category)) map[name].totalHours += hrs;
         if (r.category === '연장근무') map[name].overtime += hrs;
@@ -386,6 +410,32 @@
           <div class="grid grid-cols-4 text-center text-[10px] bg-white dark:bg-slate-800 p-1 rounded border dark:border-slate-700 text-slate-600 dark:text-slate-300">
             <div>연장<br><b>${d.overtime}h</b></div><div>특근<br><b>${d.holiday}h</b></div><div>야간<br><b>${d.night}h</b></div><div>휴가<br><b>${d.leave}회</b></div>
           </div>`;
+        // 내역 목록 (수정/삭제 버튼)
+        const det = document.createElement('details');
+        det.className = 'mt-2';
+        det.open = openWorkers.has(name);
+        det.addEventListener('toggle', () => { if (det.open) openWorkers.add(name); else openWorkers.delete(name); });
+        const sum = document.createElement('summary');
+        sum.className = 'text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 cursor-pointer py-1';
+        sum.textContent = `내역 보기·수정·삭제 (${d.recs.length}건)`;
+        det.appendChild(sum);
+        d.recs.slice().sort((a, b) => {
+          const pa = parseLocalDate(a.date) || {d: 0}, pb = parseLocalDate(b.date) || {d: 0};
+          return pa.d - pb.d;
+        }).forEach(r => {
+          const p = parseLocalDate(r.date);
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between gap-2 py-1.5 border-t dark:border-slate-700 text-[11px]';
+          row.innerHTML = `
+            <div class="min-w-0 flex-1">
+              <div class="font-semibold">${p ? p.m + '/' + p.d : ''} ${r.category} ${r.hours}h</div>
+              ${r.memo ? `<div class="text-slate-500 dark:text-slate-400 truncate">${r.memo}</div>` : ''}
+            </div>
+            <button type="button" data-rec-edit="${r.id}" class="px-3 py-2 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 shrink-0">수정</button>
+            <button type="button" data-rec-del="${r.id}" class="px-3 py-2 text-xs font-semibold rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300 shrink-0">삭제</button>`;
+          det.appendChild(row);
+        });
+        card.appendChild(det);
         container.appendChild(card);
       });
     }
@@ -441,7 +491,7 @@
       document.getElementById('nextMonthBtn').onclick = () => { curM++; if(curM>12){curM=1;curY++;} setMonthPickerValue(curY,curM); renderWork(); };
       document.getElementById('todayBtn').onclick = () => { const now=new Date(); curY=now.getFullYear(); curM=now.getMonth()+1; setMonthPickerValue(curY,curM); renderWork(); };
       
-      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = localToday(); document.getElementById('inputHours').value='2.5'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
+      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = localToday(); document.getElementById('inputHours').value='2.5'; document.getElementById('modalTitle').textContent = '내역 등록'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
       document.getElementById('closeModalBtn').onclick = document.getElementById('cancelModalBtn').onclick = () => document.getElementById('entryModal').classList.add('hidden');
       
       document.getElementById('inputCategory').onchange = (e) => {
@@ -501,6 +551,7 @@
       document.getElementById('recordForm').reset();
       document.getElementById('recordId').value = '';
       document.getElementById('inputDate').value = dateStr;
+      document.getElementById('modalTitle').textContent = '내역 등록';
       document.getElementById('inputHours').value = '2.5';
       document.getElementById('entryModal').classList.remove('hidden');
       document.getElementById('deleteModalBtn').classList.add('hidden');
@@ -510,7 +561,9 @@
       const r = records.find(item => item.id.toString() === id.toString());
       if(!r) return;
       document.getElementById('recordId').value = r.id;
-      document.getElementById('inputDate').value = r.date;
+      var pd = parseLocalDate(r.date);
+      document.getElementById('inputDate').value = pd ? `${pd.y}-${String(pd.m).padStart(2,'0')}-${String(pd.d).padStart(2,'0')}` : '';
+      document.getElementById('modalTitle').textContent = '내역 수정';
       document.getElementById('inputWorker').value = r.workerName;
       document.getElementById('inputCategory').value = r.category;
       document.getElementById('inputHours').value = r.hours;
