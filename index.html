@@ -762,12 +762,8 @@
       await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id });
       await fetchScheduleFromSheet();
       
-      var dateMap = {};
-      scheduleList.forEach(item => {
-        if (!dateMap[item.date]) dateMap[item.date] = [];
-        dateMap[item.date].push(item);
-      });
-      renderModalTaskList(dateMap[selectedSchedDate] || []);
+      var tasks = scheduleList.filter(i => i.date === selectedSchedDate);
+      renderModalTaskList(tasks);
       document.getElementById('schedModalMsg').textContent = '삭제 완료!';
     }
 
@@ -803,6 +799,7 @@
 
         document.getElementById('schedModalMsg').textContent = '추가 중...';
         
+        // 1. 구글 시트로 데이터 동기 전송
         await saveScheduleRowToSheet({ 
           action: 'schedule', 
           subAction: 'insert', 
@@ -811,18 +808,17 @@
           memo: tsk 
         });
 
+        // 2. 입력란 초기화
         document.getElementById('inputFacility').value = '';
         document.getElementById('inputTaskMemo').value = '';
         
+        // 3. 구글 시트에서 최신 데이터 완전히 불러올 때까지 대기(await)
         await fetchScheduleFromSheet();
         
-        var dateMap = {};
-        scheduleList.forEach(item => {
-          if (!dateMap[item.date]) dateMap[item.date] = [];
-          dateMap[item.date].push(item);
-        });
+        // 4. 해당 날짜 데이터만 필터링하여 상부 목록 즉시 갱신
+        var currentTasks = scheduleList.filter(item => item.date === selectedSchedDate);
+        renderModalTaskList(currentTasks);
         
-        renderModalTaskList(dateMap[selectedSchedDate] || []);
         document.getElementById('schedModalMsg').textContent = '추가 완료!';
       };
     }
