@@ -11,13 +11,6 @@
   <!-- Google Fonts (Noto Sans KR, Nanum Myeongjo) -->
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      padding-top: env(safe-area-inset-top, 24px);
-    }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
     /* 휴대폰 시스템 테마(다크모드/라이트모드) 자동 대응 스타일 */
     :root {
       --desk: #f8fafc; --paper: #ffffff; --ink: #25282d; --muted: #80838a; --line: #e3e0d6;
@@ -30,10 +23,18 @@
       }
     }
 
-    body {
+    html, body {
       background-color: var(--desk);
       color: var(--ink);
+      font-family: 'Noto Sans KR', sans-serif;
+      margin: 0;
+      padding: 0;
+      /* 상단바 영역까지 배경색이 자연스럽게 채워지도록 설정 */
+      padding-top: env(safe-area-inset-top, 0px);
     }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* 업무 일지(일정) 스타일 */
     .cal-wrap { width: 100%; max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
@@ -483,7 +484,7 @@
       document.getElementById('deleteModalBtn').classList.remove('hidden');
     }
 
-    // --- 2. 업무 일지 로직 (오류 방지 및 안정화 완료) ---
+    // --- 2. 업무 일지 로직 ---
     let schedInitialized = false;
     function initScheduleApp() {
       if (schedInitialized) return;
