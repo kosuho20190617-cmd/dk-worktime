@@ -45,6 +45,7 @@
     .schedule-dark-theme .sched-hn { font-size: 9px; line-height: 1.1; color: #f87171; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
     .schedule-dark-theme .sched-p { font-size: 10px; line-height: 1.2; color: #9ca3af; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; pointer-events: none; }
     .schedule-dark-theme .sched-cell.has::after { content: ""; position: absolute; bottom: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: #818cf8; }
+    .schedule-dark-theme .sched-cell.sel { outline: 2px solid #818cf8; outline-offset: -2px; background: #1e1b4b; }
     .schedule-dark-theme .sched-foot { padding: 12px 16px; border-top: 1px solid #1f2937; background: #0f172a; }
     .schedule-dark-theme .sched-foot h3 { margin: 0 0 6px; font: 800 13px/1.3 'Nanum Myeongjo', Batang, serif; color: #e2e8f0; }
     .schedule-dark-theme .sched-li { display: flex; gap: 12px; align-items: flex-start; width: 100%; font: inherit; font-size: 12px; color: #cbd5e1; background: none; border: 0; border-bottom: 1px dashed #1e293b; padding: 8px 2px; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
@@ -209,6 +210,7 @@
         </div>
         <div class="sched-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
         <div class="sched-grid" id="schedGrid"></div>
+        <div id="schedDayPanel" style="display: none; padding: 12px 16px; border-top: 1px solid #1f2937; background: #0b1220;"></div>
         <div class="sched-foot"><h3 id="fh"></h3><div id="list"></div><button type="button" data-sched-open="1" style="margin-top:10px;width:100%;padding:12px;background:#4f46e5;color:#fff;border:0;border-radius:10px;font-size:14px;font-weight:bold;"><i class="fa-solid fa-plus"></i> 업무 일지 추가</button></div>
       </div>
     </div>
@@ -665,12 +667,14 @@
         var isHol = ((i % 7 === 0) || holName !== '');
 
         var b = document.createElement('div');
-        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''}`;
+        b.className = `sched-cell c${i%7} ${isHol?'hol':''} ${k===todayKey?'today':''} ${dayItems.length>0?'has':''} ${k===selectedSchedDate?'sel':''}`;
+        b.setAttribute('data-date', k);
         b.innerHTML = `<div class="sched-top"><span class="sched-n">${d}</span>${holName?`<span class="sched-hn">${holName}</span>`:''}</div>${displayTxt?`<span class="sched-p">${displayTxt}</span>`:''}`;
         
         grid.appendChild(b);
       }
       renderSchedList(days, holidayMap, dateMap);
+      renderSchedDayPanel();
     }
 
     function renderSchedList(days, holidayMap, dateMap){
@@ -737,6 +741,55 @@
     }
     document.addEventListener('change', function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
     document.addEventListener('input',  function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
+
+    var selectedSchedDate = null;
+
+    function renderSchedDayPanel() {
+      var panel = document.getElementById('schedDayPanel');
+      if (!panel) return;
+      var ym = vy + '-' + String(vm + 1).padStart(2, '0');
+      if (!selectedSchedDate || selectedSchedDate.indexOf(ym) !== 0) {   // 다른 달로 넘어가면 닫기
+        selectedSchedDate = null;
+        panel.style.display = 'none';
+        panel.innerHTML = '';
+        return;
+      }
+      var items = scheduleList.filter(function(t){ return normDate(t.date) === selectedSchedDate; });
+      var html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">'
+        + '<h3 style="margin:0; font-size:13px; font-weight:800; color:#e2e8f0;">' + fmtKorDate(selectedSchedDate) + ' 업무 기록</h3>'
+        + '<button type="button" data-day-close="1" style="background:none; border:none; color:#9ca3af; font-size:18px; padding:2px 8px; cursor:pointer;">&times;</button></div>';
+      if (items.length === 0) {
+        html += '<p style="margin:0 0 8px; font-size:12px; color:#6b7280;">이 날짜에 등록된 업무 기록이 없습니다.</p>';
+      }
+      items.forEach(function(task) {
+        html += '<div style="background:#1f2937; border:1px solid #374151; border-radius:8px; padding:8px 10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">'
+          + '<div style="overflow:hidden; min-width:0;">'
+          + '<span style="display:inline-block; background:#311042; color:#a5b4fc; font-size:11px; font-weight:bold; padding:2px 6px; border-radius:4px; border:1px solid #4c1d95; margin-bottom:3px;">' + task.facility + '</span>'
+          + '<p style="margin:0; font-size:12px; color:#e5e7eb; word-break:break-all; white-space:pre-wrap;">' + task.memo + '</p>'
+          + (task.materials ? '<p style="margin:4px 0 0; font-size:11px; color:#fbbf24; word-break:break-all; white-space:pre-wrap;">필요 자재 및 공구: ' + task.materials + '</p>' : '')
+          + '</div>'
+          + '<div style="display:flex; gap:6px; flex-shrink:0;">'
+          + '<button type="button" data-day-edit="' + task.id + '" style="background:#312e81; border:1px solid #4f46e5; border-radius:6px; color:#c7d2fe; cursor:pointer; padding:8px 10px; min-width:40px; min-height:36px; font-size:12px; font-weight:bold;">수정</button>'
+          + '<button type="button" data-day-del="' + task.id + '" style="background:none; border:1px solid #374151; border-radius:6px; color:#9ca3af; cursor:pointer; padding:8px 10px; min-width:40px; min-height:36px; font-size:12px; font-weight:bold;">삭제</button>'
+          + '</div></div>';
+      });
+      html += '<button type="button" data-day-add="1" style="width:100%; padding:10px; background:#4f46e5; color:#fff; border:0; border-radius:8px; font-size:13px; font-weight:bold; cursor:pointer;">+ 이 날짜에 업무 일지 추가</button>';
+      panel.innerHTML = html;
+      panel.style.display = 'block';
+    }
+
+    function selectSchedDate(dateStr) {
+      selectedSchedDate = dateStr;
+      renderSchedGrid();   // 선택 표시 + 패널 갱신
+      var panel = document.getElementById('schedDayPanel');
+      try { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+    }
+
+    function openSchedFormForDate(dateStr) {
+      openNewSchedModal();
+      document.getElementById('inputSchedDate').value = dateStr;
+      updateMaterialsVisibility();
+    }
 
     function closeSchedModal() {
       var modal = document.getElementById('schedModal');
@@ -892,6 +945,36 @@
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('[data-sched-open]')) { e.preventDefault(); openNewSchedModal(); return; }
+      var cell = t.closest('.sched-cell[data-date]');
+      if (cell) { e.preventDefault(); selectSchedDate(cell.getAttribute('data-date')); return; }
+      if (t.closest('[data-day-close]')) { e.preventDefault(); selectedSchedDate = null; renderSchedGrid(); return; }
+      if (t.closest('[data-day-add]')) { e.preventDefault(); openSchedFormForDate(selectedSchedDate); return; }
+      var de = t.closest('[data-day-edit]');
+      if (de) {
+        e.preventDefault();
+        var eid2 = de.getAttribute('data-day-edit');
+        var eit = scheduleList.find(function(x){ return String(x.id) === String(eid2); });
+        if (eit) {
+          var keepDate = selectedSchedDate;
+          openNewSchedModal();          // 입력칸을 열고
+          startEditSchedTask(eid2);     // 그 작업 내용으로 채움
+        }
+        return;
+      }
+      var dd = t.closest('[data-day-del]');
+      if (dd) {
+        e.preventDefault();
+        var did = dd.getAttribute('data-day-del');
+        if (dd.getAttribute('data-armed') === '1') {
+          deleteSchedTask(did);
+        } else {
+          dd.setAttribute('data-armed', '1');
+          dd.style.cssText += ';background:#b91c1c;color:#fff;border-color:#ef4444;';
+          dd.textContent = '한 번 더';
+          setTimeout(function(){ try { renderSchedDayPanel(); } catch (er) {} }, 3000);
+        }
+        return;
+      }
       var se = t.closest('[data-sched-edit]');
       if (se) { e.preventDefault(); startEditSchedTask(se.getAttribute('data-sched-edit')); return; }
       var del = t.closest('[data-del-id]');
