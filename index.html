@@ -154,7 +154,7 @@
         
         <!-- 새 설비 작업 추가 폼 -->
         <div style="background: #1f2937; padding: 12px; border-radius: 10px; border: 1px solid #374151; display: flex; flex-direction: column; gap: 10px;">
-          <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #a5b4fc;"><i class="fa-solid fa-pen-to-square" style="margin-right: 4px;"></i> 업무 일지 작성</h4>
+          <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #a5b4fc;"><i class="fa-solid fa-pen-to-square" style="margin-right: 4px;"></i> <span id="schedFormTitle">업무 일지 작성</span></h4>
           <div>
             <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">날짜 선택 *</label>
             <input type="date" id="inputSchedDate" style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box;">
@@ -173,7 +173,7 @@
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
-            <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
+            <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> <span id="schedSaveLabel">저장하기</span></button>
           </div>
         </div>
 
@@ -278,6 +278,11 @@
     function localToday() {
       var n = new Date();
       return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+    }
+
+    function normDate(dateStr) {
+      var p = parseLocalDate(dateStr);
+      return p ? (p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0')) : String(dateStr || '');
     }
 
     function fmtKorDate(dateStr) {
@@ -715,6 +720,7 @@
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
       document.getElementById('inputMaterials').value = '';
+      resetSchedEditState();
       updateMaterialsVisibility();
       document.getElementById('schedModalMsg').textContent = '';
 
@@ -735,6 +741,38 @@
     function closeSchedModal() {
       var modal = document.getElementById('schedModal');
       if (modal) modal.style.display = 'none';
+      resetSchedEditState();
+    }
+
+    var editingSchedId = null;
+    var editingSchedOrig = null;
+
+    function resetSchedEditState() {
+      editingSchedId = null; editingSchedOrig = null;
+      var t = document.getElementById('schedFormTitle'); if (t) t.textContent = '업무 일지 작성';
+      var l = document.getElementById('schedSaveLabel'); if (l) l.textContent = '저장하기';
+    }
+
+    function startEditSchedTask(id) {
+      var item = scheduleList.find(function(t){ return String(t.id) === String(id); });
+      var msg = document.getElementById('schedModalMsg');
+      if (!item) return;
+      if (String(id).indexOf('tmp-') === 0) {
+        msg.style.color = '#fbbf24'; msg.textContent = '저장 중인 항목이에요. 잠시 후 다시 눌러 주세요.';
+        return;
+      }
+      var pd = parseLocalDate(item.date);
+      document.getElementById('inputSchedDate').value = pd ? (pd.y + '-' + String(pd.m).padStart(2,'0') + '-' + String(pd.d).padStart(2,'0')) : '';
+      document.getElementById('inputFacility').value = item.facility || '';
+      document.getElementById('inputTaskMemo').value = item.memo || '';
+      document.getElementById('inputMaterials').value = item.materials || '';
+      editingSchedId = id;
+      editingSchedOrig = { date: normDate(item.date), facility: item.facility, memo: item.memo };
+      document.getElementById('schedFormTitle').textContent = '업무 일지 수정';
+      document.getElementById('schedSaveLabel').textContent = '수정 저장';
+      msg.style.color = '#fbbf24'; msg.textContent = '내용을 고치고 "수정 저장"을 누르세요.';
+      var modal = document.getElementById('schedModal');
+      try { modal.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
     }
 
     var schedSaving = false;
@@ -759,12 +797,24 @@
       msg.style.color = '#fbbf24';
       msg.textContent = '저장 중...';
 
-      // 화면에 먼저 표시 (시트 반영 전 임시 항목)
-      scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk, materials: mat });
-      renderSchedGrid();
-      try { renderModalTaskList(); } catch (e) {}
-
-      await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk, materials: mat });
+      var wasEditing = (editingSchedId !== null);
+      if (wasEditing) {
+        // 수정: 화면에 먼저 반영 후 시트에 전송
+        var eid = editingSchedId, orig = editingSchedOrig;
+        scheduleList = scheduleList.map(function(t){
+          return String(t.id) === String(eid) ? { id: t.id, date: dateVal, facility: fac, memo: tsk, materials: mat } : t;
+        });
+        renderSchedGrid();
+        try { renderModalTaskList(); } catch (e) {}
+        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'update', id: eid, old: orig, date: dateVal, facility: fac, memo: tsk, materials: mat });
+        resetSchedEditState();
+      } else {
+        // 화면에 먼저 표시 (시트 반영 전 임시 항목)
+        scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk, materials: mat });
+        renderSchedGrid();
+        try { renderModalTaskList(); } catch (e) {}
+        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk, materials: mat });
+      }
 
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
@@ -774,7 +824,7 @@
       try { renderModalTaskList(); } catch (e) {}
 
       msg.style.color = '#34d399';
-      msg.textContent = '저장 완료!';
+      msg.textContent = wasEditing ? '수정 완료!' : '저장 완료!';
       schedSaving = false;
       if (btn) btn.disabled = false;
     }
@@ -804,13 +854,20 @@
             <p style="margin: 0; font-size: 12px; color: #e5e7eb; word-break: break-all; white-space: pre-wrap;">${task.memo}</p>
             ${task.materials ? `<p style="margin: 4px 0 0; font-size: 11px; color: #fbbf24; word-break: break-all; white-space: pre-wrap;">필요 자재 및 공구: ${task.materials}</p>` : ''}
           </div>
-          <button type="button" data-del-id="${task.id}" style="background: none; border: 1px solid transparent; border-radius: 6px; color: #9ca3af; cursor: pointer; padding: 8px 10px; min-width: 40px; min-height: 36px; flex-shrink: 0;" title="삭제"><i class="fa-solid fa-trash-can" style="font-size: 14px; pointer-events: none;"></i></button>
+          <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start;">
+            <button type="button" data-sched-edit="${task.id}" style="background: #312e81; border: 1px solid #4f46e5; border-radius: 6px; color: #c7d2fe; cursor: pointer; padding: 8px 10px; min-width: 40px; min-height: 36px; font-size: 12px; font-weight: bold;" title="수정">수정</button>
+            <button type="button" data-del-id="${task.id}" style="background: none; border: 1px solid transparent; border-radius: 6px; color: #9ca3af; cursor: pointer; padding: 8px 10px; min-width: 40px; min-height: 36px; flex-shrink: 0;" title="삭제"><i class="fa-solid fa-trash-can" style="font-size: 14px; pointer-events: none;"></i></button>
+          </div>
         `;
         container.appendChild(div);
       });
     }
 
     async function deleteSchedTask(id) {
+      if (editingSchedId !== null && String(editingSchedId) === String(id)) {
+        resetSchedEditState();
+        document.getElementById('inputFacility').value = ''; document.getElementById('inputTaskMemo').value = ''; document.getElementById('inputMaterials').value = '';
+      }
       var item = scheduleList.find(function(t){ return String(t.id) === String(id); });
       var msg = document.getElementById('schedModalMsg');
       msg.style.color = '#fbbf24';
@@ -822,7 +879,7 @@
       try { renderModalTaskList(); } catch (e) {}
 
       if (item && String(id).indexOf('tmp-') !== 0) {
-        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id, date: item.date, facility: item.facility, memo: item.memo });
+        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'delete', id: id, date: normDate(item.date), facility: item.facility, memo: item.memo });
       }
       await fetchScheduleFromSheet();
       try { renderModalTaskList(); } catch (e) {}
@@ -835,6 +892,8 @@
       var t = e.target;
       if (!t || !t.closest) return;
       if (t.closest('[data-sched-open]')) { e.preventDefault(); openNewSchedModal(); return; }
+      var se = t.closest('[data-sched-edit]');
+      if (se) { e.preventDefault(); startEditSchedTask(se.getAttribute('data-sched-edit')); return; }
       var del = t.closest('[data-del-id]');
       if (del) {
         e.preventDefault();
