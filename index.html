@@ -603,7 +603,11 @@
       try {
         const res = await fetch(SCRIPT_URL + '?type=schedule&t=' + Date.now());
         var data = await res.json();
-        if (Array.isArray(data)) scheduleList = data.filter(function(it){ return it && it.facility !== undefined; });
+        if (Array.isArray(data)) {
+          scheduleList = data.filter(function(it){ return it && it.facility !== undefined; });
+          // 새 스크립트는 항목마다 materials 칸을 함께 보내 줌 (옛 스크립트는 없음)
+          if (scheduleList.length > 0) schedBackendHasMaterials = ('materials' in scheduleList[0]);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -797,6 +801,7 @@
       resetSchedEditState();
     }
 
+    var schedBackendHasMaterials = null;   // null=아직 모름, true/false=스크립트 새 버전 여부
     var editingSchedId = null;
     var editingSchedOrig = null;
 
@@ -876,8 +881,13 @@
       await fetchScheduleFromSheet();   // 시트 기준으로 다시 동기화
       try { renderModalTaskList(); } catch (e) {}
 
-      msg.style.color = '#34d399';
-      msg.textContent = wasEditing ? '수정 완료!' : '저장 완료!';
+      if (mat !== '' && schedBackendHasMaterials === false) {
+        msg.style.color = '#f87171';
+        msg.textContent = '저장은 됐지만 필요 자재 및 공구는 시트에 저장되지 않았어요. 앱스스크립트를 "새 버전"으로 배포해 주세요.';
+      } else {
+        msg.style.color = '#34d399';
+        msg.textContent = wasEditing ? '수정 완료!' : '저장 완료!';
+      }
       schedSaving = false;
       if (btn) btn.disabled = false;
     }
