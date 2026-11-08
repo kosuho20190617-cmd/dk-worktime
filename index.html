@@ -171,6 +171,7 @@
           <div id="schedMaterialsWrap" style="display: block;">
             <label style="display: block; font-size: 10px; font-weight: bold; color: #fbbf24; margin-bottom: 3px;">필요 자재 및 공구</label>
             <textarea id="inputMaterials" rows="2" placeholder=" " style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #b45309; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
+            <div id="schedBackendNote" style="display: none; margin-top: 4px; font-size: 11px; color: #f87171;">시트(앱스스크립트)가 옛 버전이라 이 칸은 저장되지 않아요. 새 버전으로 배포해 주세요.</div>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
@@ -607,6 +608,8 @@
           scheduleList = data.filter(function(it){ return it && it.facility !== undefined; });
           // 새 스크립트는 항목마다 materials 칸을 함께 보내 줌 (옛 스크립트는 없음)
           if (scheduleList.length > 0) schedBackendHasMaterials = ('materials' in scheduleList[0]);
+          var note = document.getElementById('schedBackendNote');
+          if (note) note.style.display = (schedBackendHasMaterials === false) ? 'block' : 'none';
         }
       } catch (e) {
         console.error(e);
@@ -614,10 +617,12 @@
       renderSchedGrid();
     }
 
+    // 시트로 전송하고 서버 응답을 돌려줌 (응답을 못 읽는 환경이면 null — 요청 자체는 이미 전송됨)
     async function saveScheduleRowToSheet(payload) {
       try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-      } catch (e) { console.error(e); }
+        const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+        try { return await res.json(); } catch (e) { return null; }
+      } catch (e) { console.error(e); return null; }
     }
 
     function getHolidaysOfYear(year) {
@@ -856,6 +861,7 @@
       msg.textContent = '저장 중...';
 
       var wasEditing = (editingSchedId !== null);
+      var saveResult = null;
       if (wasEditing) {
         // 수정: 화면에 먼저 반영 후 시트에 전송
         var eid = editingSchedId, orig = editingSchedOrig;
@@ -864,14 +870,14 @@
         });
         renderSchedGrid();
         try { renderModalTaskList(); } catch (e) {}
-        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'update', id: eid, old: orig, date: dateVal, facility: fac, memo: tsk, materials: mat });
+        saveResult = await saveScheduleRowToSheet({ action: 'schedule', subAction: 'update', id: eid, old: orig, date: dateVal, facility: fac, memo: tsk, materials: mat });
         resetSchedEditState();
       } else {
         // 화면에 먼저 표시 (시트 반영 전 임시 항목)
         scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk, materials: mat });
         renderSchedGrid();
         try { renderModalTaskList(); } catch (e) {}
-        await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk, materials: mat });
+        saveResult = await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk, materials: mat });
       }
 
       document.getElementById('inputFacility').value = '';
@@ -881,9 +887,18 @@
       await fetchScheduleFromSheet();   // 시트 기준으로 다시 동기화
       try { renderModalTaskList(); } catch (e) {}
 
-      if (mat !== '' && schedBackendHasMaterials === false) {
+      var found = scheduleList.find(function(t){
+        return normDate(t.date) === dateVal && String(t.facility || '') === fac && String(t.memo || '') === tsk;
+      });
+      if (saveResult && saveResult.status === 'error') {
         msg.style.color = '#f87171';
-        msg.textContent = '저장은 됐지만 필요 자재 및 공구는 시트에 저장되지 않았어요. 앱스스크립트를 "새 버전"으로 배포해 주세요.';
+        msg.textContent = '시트 저장 오류: ' + saveResult.message;
+      } else if (!found) {
+        msg.style.color = '#f87171';
+        msg.textContent = '시트에 저장되지 않았어요. 앱스스크립트 배포 상태를 확인해 주세요.' + (saveResult === null ? ' (시트 응답을 확인하지 못함)' : '');
+      } else if (mat !== '' && String(found.materials || '') !== mat) {
+        msg.style.color = '#f87171';
+        msg.textContent = '일지는 저장됐지만 필요 자재 및 공구는 시트에 저장되지 않았어요. 앱스스크립트를 "새 버전"으로 배포해 주세요.';
       } else {
         msg.style.color = '#34d399';
         msg.textContent = wasEditing ? '수정 완료!' : '저장 완료!';
