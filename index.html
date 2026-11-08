@@ -167,6 +167,10 @@
             <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">작업 내용 *</label>
             <textarea id="inputTaskMemo" rows="3" placeholder=" " style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
           </div>
+          <div id="schedMaterialsWrap" style="display: none;">
+            <label style="display: block; font-size: 10px; font-weight: bold; color: #fbbf24; margin-bottom: 3px;">필요 자재 및 공구</label>
+            <textarea id="inputMaterials" rows="2" placeholder=" " style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #b45309; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
+          </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
             <span id="schedModalMsg" style="font-size: 11px; color: #34d399; font-weight: 500;"></span>
             <button type="button" id="addSchedTaskBtn" style="padding: 8px 16px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-check"></i> 저장하기</button>
@@ -233,7 +237,7 @@
           </select>
         </div>
         <div><label class="block text-xs font-bold mb-1">시간 *</label><input type="number" id="inputHours" step="0.5" min="0" max="24" required class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm bg-transparent"></div>
-        <div><label class="block text-xs font-bold mb-1">사유 및 비고</label><textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm resize-none bg-transparent"></textarea></div>
+        <div><label class="block text-xs font-bold mb-1">사유 및 비고</label><textarea id="inputMemo" rows="3" class="w-full px-3 py-2 border dark:border-slate-600 rounded-lg text-sm resize-none bg-transparent">생산-Line 설비 유지 관리</textarea></div>
         <div class="flex items-center justify-between pt-3 border-t dark:border-slate-700">
           <button type="button" id="deleteModalBtn" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 dark:bg-red-900/30 rounded-lg hidden">삭제</button>
           <div class="flex space-x-2 ml-auto">
@@ -500,7 +504,7 @@
       document.getElementById('nextMonthBtn').onclick = () => { curM++; if(curM>12){curM=1;curY++;} setMonthPickerValue(curY,curM); renderWork(); };
       document.getElementById('todayBtn').onclick = () => { const now=new Date(); curY=now.getFullYear(); curM=now.getMonth()+1; setMonthPickerValue(curY,curM); renderWork(); };
       
-      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = localToday(); document.getElementById('inputHours').value='2.5'; document.getElementById('modalTitle').textContent = '내역 등록'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
+      document.getElementById('openAddModalBtn').onclick = () => { document.getElementById('recordForm').reset(); document.getElementById('recordId').value=''; document.getElementById('inputDate').value = localToday(); document.getElementById('inputHours').value='2.5'; document.getElementById('inputMemo').value = '생산-Line 설비 유지 관리'; document.getElementById('modalTitle').textContent = '내역 등록'; document.getElementById('entryModal').classList.remove('hidden'); document.getElementById('deleteModalBtn').classList.add('hidden'); };
       document.getElementById('closeModalBtn').onclick = document.getElementById('cancelModalBtn').onclick = () => document.getElementById('entryModal').classList.add('hidden');
       
       document.getElementById('inputCategory').onchange = (e) => {
@@ -556,6 +560,7 @@
       document.getElementById('inputDate').value = dateStr;
       document.getElementById('modalTitle').textContent = '내역 등록';
       document.getElementById('inputHours').value = '2.5';
+      document.getElementById('inputMemo').value = '생산-Line 설비 유지 관리';
       document.getElementById('entryModal').classList.remove('hidden');
       document.getElementById('deleteModalBtn').classList.add('hidden');
     }
@@ -687,6 +692,7 @@
           }
           dayItems.forEach(item => {
             nmHtml += `<div><b>${item.facility}</b> ${item.memo}</div>`;
+            if (item.materials) nmHtml += `<div style="color:#fbbf24; font-size:11px;">필요 자재 및 공구: ${item.materials}</div>`;
           });
 
           divLi.innerHTML = `<span class="d">${d}일</span><span class="nm">${nmHtml}</span>`;
@@ -708,12 +714,25 @@
       document.getElementById('inputSchedDate').value = todayStr;
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
+      document.getElementById('inputMaterials').value = '';
+      updateMaterialsVisibility();
       document.getElementById('schedModalMsg').textContent = '';
 
       modal.style.display = 'block';         // 화면 안에서 펼침
       try { modal.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
       try { renderModalTaskList(); } catch (e) { console.error(e); }  // 목록 오류가 나도 모달은 열림
     }
+
+    function updateMaterialsVisibility() {
+      var dv = document.getElementById('inputSchedDate').value;
+      var wrap = document.getElementById('schedMaterialsWrap');
+      if (!wrap) return;
+      var future = !!dv && dv > localToday();   // yyyy-mm-dd 문자열 비교
+      wrap.style.display = future ? 'block' : 'none';
+      if (!future) document.getElementById('inputMaterials').value = '';
+    }
+    document.addEventListener('change', function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
+    document.addEventListener('input',  function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
 
     function closeSchedModal() {
       var modal = document.getElementById('schedModal');
@@ -726,6 +745,8 @@
       var dateVal = document.getElementById('inputSchedDate').value;
       var fac = document.getElementById('inputFacility').value.trim();
       var tsk = document.getElementById('inputTaskMemo').value.trim();
+      updateMaterialsVisibility();
+      var mat = document.getElementById('inputMaterials').value.trim();
       var msg = document.getElementById('schedModalMsg');
       var btn = document.getElementById('addSchedTaskBtn');
 
@@ -741,14 +762,15 @@
       msg.textContent = '저장 중...';
 
       // 화면에 먼저 표시 (시트 반영 전 임시 항목)
-      scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk });
+      scheduleList.push({ id: 'tmp-' + Date.now(), date: dateVal, facility: fac, memo: tsk, materials: mat });
       renderSchedGrid();
       try { renderModalTaskList(); } catch (e) {}
 
-      await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk });
+      await saveScheduleRowToSheet({ action: 'schedule', subAction: 'insert', date: dateVal, facility: fac, memo: tsk, materials: mat });
 
       document.getElementById('inputFacility').value = '';
       document.getElementById('inputTaskMemo').value = '';
+      document.getElementById('inputMaterials').value = '';
 
       await fetchScheduleFromSheet();   // 시트 기준으로 다시 동기화
       try { renderModalTaskList(); } catch (e) {}
@@ -782,6 +804,7 @@
             <div style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">${fmtKorDate(task.date)}</div>
             <span style="display: inline-block; background: #311042; color: #a5b4fc; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #4c1d95; margin-bottom: 3px;">${task.facility}</span>
             <p style="margin: 0; font-size: 12px; color: #e5e7eb; word-break: break-all; white-space: pre-wrap;">${task.memo}</p>
+            ${task.materials ? `<p style="margin: 4px 0 0; font-size: 11px; color: #fbbf24; word-break: break-all; white-space: pre-wrap;">필요 자재 및 공구: ${task.materials}</p>` : ''}
           </div>
           <button type="button" data-del-id="${task.id}" style="background: none; border: 1px solid transparent; border-radius: 6px; color: #9ca3af; cursor: pointer; padding: 8px 10px; min-width: 40px; min-height: 36px; flex-shrink: 0;" title="삭제"><i class="fa-solid fa-trash-can" style="font-size: 14px; pointer-events: none;"></i></button>
         `;
