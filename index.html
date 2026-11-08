@@ -167,7 +167,7 @@
             <label style="display: block; font-size: 10px; font-weight: bold; color: #d1d5db; margin-bottom: 3px;">작업 내용 *</label>
             <textarea id="inputTaskMemo" rows="3" placeholder=" " style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #4b5563; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
           </div>
-          <div id="schedMaterialsWrap" style="display: none;">
+          <div id="schedMaterialsWrap" style="display: block;">
             <label style="display: block; font-size: 10px; font-weight: bold; color: #fbbf24; margin-bottom: 3px;">필요 자재 및 공구</label>
             <textarea id="inputMaterials" rows="2" placeholder=" " style="width: 100%; padding: 8px 10px; background: #0b0f19; border: 1px solid #b45309; border-radius: 6px; font-size: 13px; color: #fff; box-sizing: border-box; resize: none;"></textarea>
           </div>
@@ -727,9 +727,7 @@
       var dv = document.getElementById('inputSchedDate').value;
       var wrap = document.getElementById('schedMaterialsWrap');
       if (!wrap) return;
-      var future = !!dv && dv > localToday();   // yyyy-mm-dd 문자열 비교
-      wrap.style.display = future ? 'block' : 'none';
-      if (!future) document.getElementById('inputMaterials').value = '';
+      wrap.style.display = 'block';   // 날짜와 상관없이 항상 표시
     }
     document.addEventListener('change', function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
     document.addEventListener('input',  function(e) { if (e.target && e.target.id === 'inputSchedDate') updateMaterialsVisibility(); });
