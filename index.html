@@ -301,7 +301,7 @@
       document.getElementById('scheduleView').classList.add('hidden');
     }
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiDMcNentZspZqlwqd6FOn67l0kpg91x8Lmfudask_v2F3eXr1CnsJJrgoG1hSQFE4bw/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwHS4aeS89eIAofGqvslC8tD8TWJMiDB6Z7vhLGxiIsJdVqAJ1XMXDzAmkfV8wdihDLXA/exec';
     let records = [];
     let curY = new Date().getFullYear(), curM = new Date().getMonth() + 1;
     let workInitialized = false;
@@ -887,9 +887,10 @@
       await fetchScheduleFromSheet();   // 시트 기준으로 다시 동기화
       try { renderModalTaskList(); } catch (e) {}
 
-      var found = scheduleList.find(function(t){
+      var sameItems = scheduleList.filter(function(t){
         return normDate(t.date) === dateVal && String(t.facility || '') === fac && String(t.memo || '') === tsk;
       });
+      var found = sameItems.length ? sameItems[sameItems.length - 1] : null;   // 같은 내용이 여러 개면 가장 최근 것
       if (saveResult && saveResult.status === 'error') {
         msg.style.color = '#f87171';
         msg.textContent = '시트 저장 오류: ' + saveResult.message;
