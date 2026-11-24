@@ -124,6 +124,7 @@
           <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200 dark:border-amber-700">특근</span>
           <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-700">야간</span>
           <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">연차·반차·조퇴</span>
+          <span class="px-1.5 py-0.5 rounded bg-red-50 text-red-600 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800">공휴일</span>
         </div>
         <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-1.5 mb-1.5 min-w-[280px]">
           <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
@@ -485,18 +486,25 @@
 
       const today = new Date();
       const isCur = today.getFullYear() === y && (today.getMonth() + 1) === m;
+      const holMap = getHolidaysOfYear(y);
 
       for (let d = 1; d <= last; d++) {
         const cell = document.createElement('div');
         const isT = isCur && today.getDate() === d;
-        cell.className = `min-w-0 min-h-[78px] rounded-lg p-0.5 sm:p-1 border flex flex-col justify-start ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
-        
         const dStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const holName = holMap[dStr] || '';
+        const dow = new Date(y, m - 1, d).getDay();
+        const isRed = holName !== '' || dow === 0;
+        const numColor = isT ? 'bg-indigo-600 text-white px-1.5 rounded-full' : (isRed ? 'text-red-500' : (dow === 6 ? 'text-blue-500' : ''));
+        const cellBg = isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200'
+          : (holName ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700');
+        cell.className = `min-w-0 min-h-[78px] rounded-lg p-0.5 sm:p-1 border flex flex-col justify-start ${cellBg}`;
         cell.innerHTML = `
           <div class="flex justify-between items-center mb-0.5 px-0.5">
-            <span class="text-[11px] sm:text-xs font-bold ${isT ? 'bg-indigo-600 text-white px-1.5 rounded-full' : ''}">${d}</span>
+            <span class="text-[11px] sm:text-xs font-bold ${numColor}">${d}</span>
             <button type="button" onclick="openAddModal('${dStr}')" class="text-slate-300 hover:text-indigo-600 text-[11px]"><i class="fa-solid fa-plus"></i></button>
           </div>
+          ${holName ? `<span class="block px-0.5 mb-0.5 text-[8px] sm:text-[10px] font-bold leading-[1.1] text-red-500 dark:text-red-400 break-all">${holName}</span>` : ''}
           <div class="space-y-0.5"></div>`;
         
         const shortCatMap = {
@@ -666,6 +674,11 @@
       for (var md in fixed) {
         hMap[year + '-' + md] = fixed[md];
       }
+      // 2026년부터 법정공휴일로 지정된 노동절(5/1), 제헌절(7/17)
+      if (year >= 2026) {
+        hMap[year + '-05-01'] = '노동절';
+        hMap[year + '-07-17'] = '제헌절';
+      }
 
       // 음력 명절(설날 연휴, 추석 연휴) 및 부처님오신날 양력 변환 테이블 (2024~2030년)
       var lunarTable = {
@@ -740,6 +753,7 @@
 
       // 2) 일반 공휴일(삼일절, 어린이날, 부처님오신날, 광복절, 개천절, 한글날, 성탄절) 토·일요일/중복 대체공휴일
       var subTargets = ['03-01', '05-05', '08-15', '10-03', '10-09', '12-25'];
+      if (year >= 2026) subTargets.push('05-01');
       subTargets.forEach(function(md) {
         var dStr = year + '-' + md;
         var dow = getDow(dStr);
@@ -758,7 +772,8 @@
       // 연도별 확정 임시공휴일 반영
       var tempHolidays = {
         '2024-10-01': '임시공휴일',
-        '2025-01-27': '임시공휴일'
+        '2025-01-27': '임시공휴일',
+        '2026-06-03': '지방선거일'
       };
       for (var tk in tempHolidays) {
         if (tk.indexOf(year + '-') === 0 && !hMap[tk]) {
