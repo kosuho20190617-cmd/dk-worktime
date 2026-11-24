@@ -627,8 +627,119 @@
 
     function getHolidaysOfYear(year) {
       var hMap = {};
-      var fixed = {'01-01': '신정', '03-01': '삼일절', '05-05': '어린이날', '06-06': '현충일', '08-15': '광복절', '10-03': '개천절', '10-09': '한글날', '12-25': '성탄절'};
-      for (var md in fixed) hMap[year + '-' + md] = fixed[md];
+      var fixed = {
+        '01-01': '신정',
+        '03-01': '삼일절',
+        '05-05': '어린이날',
+        '06-06': '현충일',
+        '08-15': '광복절',
+        '10-03': '개천절',
+        '10-09': '한글날',
+        '12-25': '성탄절'
+      };
+      for (var md in fixed) {
+        hMap[year + '-' + md] = fixed[md];
+      }
+
+      // 음력 명절(설날 연휴, 추석 연휴) 및 부처님오신날 양력 변환 테이블 (2024~2030년)
+      var lunarTable = {
+        2024: { seol: '2024-02-10', chuseok: '2024-09-17', buddha: '2024-05-15' },
+        2025: { seol: '2025-01-29', chuseok: '2025-10-06', buddha: '2025-05-05' },
+        2026: { seol: '2026-02-17', chuseok: '2026-09-25', buddha: '2026-05-24' },
+        2027: { seol: '2027-02-07', chuseok: '2027-09-15', buddha: '2027-05-13' },
+        2028: { seol: '2028-01-27', chuseok: '2028-10-03', buddha: '2028-05-02' },
+        2029: { seol: '2029-02-13', chuseok: '2029-09-22', buddha: '2029-05-20' },
+        2030: { seol: '2030-02-03', chuseok: '2030-09-12', buddha: '2030-05-09' }
+      };
+
+      function toKey(dt) {
+        return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+      }
+      function addDays(dateStr, offset) {
+        var p = dateStr.split('-').map(Number);
+        var dt = new Date(p[0], p[1] - 1, p[2] + offset);
+        return toKey(dt);
+      }
+      function getDow(dateStr) {
+        var p = dateStr.split('-').map(Number);
+        return new Date(p[0], p[1] - 1, p[2]).getDay();
+      }
+      function addSubstituteHoliday(targetDateStr, label) {
+        var cur = addDays(targetDateStr, 1);
+        while (getDow(cur) === 0 || getDow(cur) === 6 || hMap[cur]) {
+          cur = addDays(cur, 1);
+        }
+        if (cur.indexOf(year + '-') === 0) {
+          hMap[cur] = label || '대체공휴일';
+        }
+      }
+
+      var lt = lunarTable[year];
+      var seolDays = [];
+      var chuseokDays = [];
+      if (lt) {
+        // 설날 전날, 당일, 다음날
+        var sPrev = addDays(lt.seol, -1);
+        var sNext = addDays(lt.seol, 1);
+        if (sPrev.indexOf(year + '-') === 0) { hMap[sPrev] = '설날 연휴'; seolDays.push(sPrev); }
+        hMap[lt.seol] = '설날'; seolDays.push(lt.seol);
+        if (sNext.indexOf(year + '-') === 0) { hMap[sNext] = '설날 연휴'; seolDays.push(sNext); }
+
+        // 추석 전날, 당일, 다음날
+        var cPrev = addDays(lt.chuseok, -1);
+        var cNext = addDays(lt.chuseok, 1);
+        if (cPrev.indexOf(year + '-') === 0) { hMap[cPrev] = '추석 연휴'; chuseokDays.push(cPrev); }
+        hMap[lt.chuseok] = '추석'; chuseokDays.push(lt.chuseok);
+        if (cNext.indexOf(year + '-') === 0) { hMap[cNext] = '추석 연휴'; chuseokDays.push(cNext); }
+
+        // 부처님오신날 (기존 공휴일과 겹치면 괄호 병기)
+        if (hMap[lt.buddha]) {
+          hMap[lt.buddha] = hMap[lt.buddha] + '·부처님오신날';
+        } else {
+          hMap[lt.buddha] = '부처님오신날';
+        }
+      }
+
+      // 1) 설날·추석 연휴 대체공휴일: 연휴 중 일요일이 포함되거나 다른 공휴일과 겹칠 때
+      var needSeolSub = seolDays.some(function(d) { return getDow(d) === 0; });
+      if (needSeolSub && seolDays.length > 0) {
+        addSubstituteHoliday(seolDays[seolDays.length - 1], '대체공휴일(설날)');
+      }
+      var needChuseokSub = chuseokDays.some(function(d) {
+        return getDow(d) === 0 || d === year + '-10-03' || d === year + '-10-09';
+      });
+      if (needChuseokSub && chuseokDays.length > 0) {
+        addSubstituteHoliday(chuseokDays[chuseokDays.length - 1], '대체공휴일(추석)');
+      }
+
+      // 2) 일반 공휴일(삼일절, 어린이날, 부처님오신날, 광복절, 개천절, 한글날, 성탄절) 토·일요일/중복 대체공휴일
+      var subTargets = ['03-01', '05-05', '08-15', '10-03', '10-09', '12-25'];
+      subTargets.forEach(function(md) {
+        var dStr = year + '-' + md;
+        var dow = getDow(dStr);
+        var isDupWithLunar = lt && (dStr === lt.buddha || seolDays.indexOf(dStr) !== -1 || chuseokDays.indexOf(dStr) !== -1);
+        if (dow === 0 || dow === 6 || isDupWithLunar) {
+          addSubstituteHoliday(dStr, '대체공휴일');
+        }
+      });
+      if (lt) {
+        var bDow = getDow(lt.buddha);
+        if ((bDow === 0 || bDow === 6) && lt.buddha !== year + '-05-05') {
+          addSubstituteHoliday(lt.buddha, '대체공휴일');
+        }
+      }
+
+      // 연도별 확정 임시공휴일 반영
+      var tempHolidays = {
+        '2024-10-01': '임시공휴일',
+        '2025-01-27': '임시공휴일'
+      };
+      for (var tk in tempHolidays) {
+        if (tk.indexOf(year + '-') === 0 && !hMap[tk]) {
+          hMap[tk] = tempHolidays[tk];
+        }
+      }
+
       return hMap;
     }
 
