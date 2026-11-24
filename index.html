@@ -118,11 +118,17 @@
           <select id="workerFilter" class="bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-xs sm:text-sm rounded-lg px-2.5 py-1.5"><option value="ALL">전체 보기</option></select>
         </div>
       </section>
-      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-6 overflow-x-auto">
-        <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-2 mb-2 min-w-[280px]">
+      <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-1.5 sm:p-6 overflow-x-auto">
+        <div class="flex flex-wrap items-center justify-end gap-1.5 text-[10px] mb-2 px-1 text-slate-600 dark:text-slate-300">
+          <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700">연근(연장)</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200 dark:border-amber-700">특근</span>
+          <span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-700">야간</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700">연차·반차·조퇴</span>
+        </div>
+        <div class="grid grid-cols-7 text-center font-semibold text-xs sm:text-sm text-slate-500 border-b dark:border-slate-700 pb-1.5 mb-1.5 min-w-[280px]">
           <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
         </div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-1 min-w-[280px]"></div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-1 min-w-[280px]"></div>
       </section>
       <section class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 space-y-3">
         <h3 class="text-xs sm:text-sm font-bold flex items-center space-x-2"><i class="fa-solid fa-users text-indigo-600"></i><span>근무자별 월간 집계 내역</span></h3>
@@ -483,22 +489,42 @@
       for (let d = 1; d <= last; d++) {
         const cell = document.createElement('div');
         const isT = isCur && today.getDate() === d;
-        cell.className = `min-h-[75px] rounded-lg p-1 border flex flex-col justify-between ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
+        cell.className = `min-h-[78px] rounded-lg p-0.5 sm:p-1 border flex flex-col justify-start ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
         
         const dStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         cell.innerHTML = `
-          <div class="flex justify-between items-center mb-0.5">
-            <span class="text-xs font-bold ${isT ? 'bg-indigo-600 text-white px-1.5 rounded-full' : ''}">${d}</span>
-            <button type="button" onclick="openAddModal('${dStr}')" class="text-slate-300 hover:text-indigo-600 text-xs"><i class="fa-solid fa-plus"></i></button>
+          <div class="flex justify-between items-center mb-0.5 px-0.5">
+            <span class="text-[11px] sm:text-xs font-bold ${isT ? 'bg-indigo-600 text-white px-1.5 rounded-full' : ''}">${d}</span>
+            <button type="button" onclick="openAddModal('${dStr}')" class="text-slate-300 hover:text-indigo-600 text-[11px]"><i class="fa-solid fa-plus"></i></button>
           </div>
-          <div class="space-y-0.5 overflow-y-auto max-h-[60px] no-scrollbar"></div>`;
+          <div class="space-y-0.5 overflow-y-auto max-h-[68px] no-scrollbar"></div>`;
         
+        const shortCatMap = {
+          '연장근무': '연근',
+          '휴일특근': '특근',
+          '야간근무': '야간',
+          '연차': '연차',
+          '반차': '반차',
+          '조퇴': '조퇴'
+        };
+        const badgeStyleMap = {
+          '연장근무': 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-200 dark:border-indigo-700',
+          '휴일특근': 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700',
+          '야간근무': 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/50 dark:text-purple-200 dark:border-purple-700',
+          '연차': 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-200 dark:border-emerald-700',
+          '반차': 'bg-teal-50 text-teal-800 border-teal-200 dark:bg-teal-900/50 dark:text-teal-200 dark:border-teal-700',
+          '조퇴': 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-900/50 dark:text-rose-200 dark:border-rose-700'
+        };
+
         const content = cell.querySelector('div:last-child');
         (byDay[d] || []).forEach(r => {
           const badge = document.createElement('div');
           badge.onclick = (e) => { e.stopPropagation(); openEditModal(r.id); };
-          badge.className = 'text-[9px] px-1 py-0.5 rounded border truncate cursor-pointer bg-slate-50 dark:bg-slate-700 dark:border-slate-600 flex justify-between';
-          badge.innerHTML = `<span><b>${r.workerName}</b> (${r.category})</span><b>${r.hours}h</b>`;
+          const shortCat = shortCatMap[r.category] || r.category;
+          const colorCls = badgeStyleMap[r.category] || 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600';
+          badge.className = `text-[9px] sm:text-[10px] leading-tight px-0.5 sm:px-1 py-0.5 rounded border cursor-pointer flex items-center justify-between gap-0.5 ${colorCls}`;
+          badge.innerHTML = `<span class="truncate font-semibold">${r.workerName}</span><span class="shrink-0 font-bold tracking-tighter">${shortCat}</span>`;
+          badge.title = `${r.workerName} (${r.category} ${r.hours}h)`;
           content.appendChild(badge);
         });
         grid.appendChild(cell);
