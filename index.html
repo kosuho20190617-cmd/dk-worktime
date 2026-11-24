@@ -489,7 +489,7 @@
       for (let d = 1; d <= last; d++) {
         const cell = document.createElement('div');
         const isT = isCur && today.getDate() === d;
-        cell.className = `min-h-[78px] rounded-lg p-0.5 sm:p-1 border flex flex-col justify-start ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
+        cell.className = `min-w-0 min-h-[78px] rounded-lg p-0.5 sm:p-1 border flex flex-col justify-start ${isT ? 'bg-indigo-50/30 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-200' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`;
         
         const dStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         cell.innerHTML = `
@@ -497,7 +497,7 @@
             <span class="text-[11px] sm:text-xs font-bold ${isT ? 'bg-indigo-600 text-white px-1.5 rounded-full' : ''}">${d}</span>
             <button type="button" onclick="openAddModal('${dStr}')" class="text-slate-300 hover:text-indigo-600 text-[11px]"><i class="fa-solid fa-plus"></i></button>
           </div>
-          <div class="space-y-0.5 overflow-y-auto max-h-[68px] no-scrollbar"></div>`;
+          <div class="space-y-0.5"></div>`;
         
         const shortCatMap = {
           '연장근무': '연근',
@@ -522,8 +522,8 @@
           badge.onclick = (e) => { e.stopPropagation(); openEditModal(r.id); };
           const shortCat = shortCatMap[r.category] || r.category;
           const colorCls = badgeStyleMap[r.category] || 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600';
-          badge.className = `text-[9px] sm:text-[10px] leading-tight px-0.5 sm:px-1 py-0.5 rounded border cursor-pointer flex items-center justify-between gap-0.5 ${colorCls}`;
-          badge.innerHTML = `<span class="truncate font-semibold">${r.workerName}</span><span class="shrink-0 font-bold tracking-tighter">${shortCat}</span>`;
+          badge.className = `leading-none rounded border cursor-pointer flex flex-col items-center text-center overflow-hidden ${colorCls}`;
+          badge.innerHTML = `<span class="w-full px-px pt-0.5 text-[10px] sm:text-xs font-bold leading-[1.15] break-all">${r.workerName}</span><span class="w-full py-0.5 text-[9px] sm:text-[10px] font-extrabold leading-none border-t border-current/20 bg-white/50 dark:bg-black/20">${shortCat}</span>`;
           badge.title = `${r.workerName} (${r.category} ${r.hours}h)`;
           content.appendChild(badge);
         });
